@@ -38,7 +38,7 @@ export interface EnvConfig {
 
 const required = [
   'NODE_ENV',
-  'PORT',
+  
   'DATABASE_URL',
   'JWT_SECRET',
   'JWT_EXPIRES_IN',
