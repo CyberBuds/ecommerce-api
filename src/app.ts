@@ -36,23 +36,12 @@ app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(requestLogger);
 
 // Swagger/OpenAPI documentation
-// Swagger/OpenAPI documentation
-app.use(
-  '/api-docs',
-  helmet({ contentSecurityPolicy: false }),
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec, {
-    swaggerOptions: {
-      url: '/api/swagger.json',
-    },
-    customCss: '.topbar { display: none }',
-    customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.min.css',
-    customJs: [
-      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.min.js',
-      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.min.js'
-    ],
-  })
-);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  swaggerOptions: {
+    url: '/api/swagger.json',
+  },
+  customCss: '.topbar { display: none }',
+}));
 
 // OpenAPI JSON endpoint
 app.get('/api/swagger.json', (_req, res) => {
