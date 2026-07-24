@@ -1,0 +1,145 @@
+-- Create product management tables
+CREATE TABLE `Product` (
+  `id` INTEGER NOT NULL AUTO_INCREMENT,
+  `productCode` VARCHAR(191) NOT NULL,
+  `sku` VARCHAR(191) NOT NULL,
+  `barcode` VARCHAR(191) NULL,
+  `productName` VARCHAR(191) NOT NULL,
+  `slug` VARCHAR(191) NOT NULL,
+  `shortDescription` VARCHAR(191) NULL,
+  `description` VARCHAR(191) NULL,
+  `categoryId` INTEGER NULL,
+  `subCategoryId` INTEGER NULL,
+  `brandId` INTEGER NULL,
+  `fabricId` INTEGER NULL,
+  `unitId` INTEGER NULL,
+  `gstId` INTEGER NULL,
+  `countryOfOriginId` INTEGER NULL,
+  `careInstructionId` INTEGER NULL,
+  `occasionId` INTEGER NULL,
+  `patternId` INTEGER NULL,
+  `weavingStyleId` INTEGER NULL,
+  `borderTypeId` INTEGER NULL,
+  `workTypeId` INTEGER NULL,
+  `weight` DOUBLE NULL,
+  `length` DOUBLE NULL,
+  `width` DOUBLE NULL,
+  `height` DOUBLE NULL,
+  `costPrice` DECIMAL(65,30) NULL,
+  `sellingPrice` DECIMAL(65,30) NULL,
+  `mrp` DECIMAL(65,30) NULL,
+  `discountType` ENUM('NONE','PERCENTAGE','FIXED') NULL DEFAULT 'NONE',
+  `discountValue` DECIMAL(65,30) NULL,
+  `taxAmount` DECIMAL(65,30) NULL,
+  `netAmount` DECIMAL(65,30) NULL,
+  `metaTitle` VARCHAR(191) NULL,
+  `metaKeywords` VARCHAR(191) NULL,
+  `metaDescription` VARCHAR(191) NULL,
+  `searchKeywords` VARCHAR(191) NULL,
+  `isFeatured` BOOLEAN NOT NULL DEFAULT false,
+  `isTrending` BOOLEAN NOT NULL DEFAULT false,
+  `isBestSeller` BOOLEAN NOT NULL DEFAULT false,
+  `isNewArrival` BOOLEAN NOT NULL DEFAULT false,
+  `status` ENUM('DRAFT','ACTIVE','INACTIVE','ARCHIVED') NOT NULL DEFAULT 'DRAFT',
+  `publishedAt` DATETIME(3) NULL,
+  `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt` DATETIME(3) NOT NULL,
+  `createdBy` INTEGER NULL,
+  `updatedBy` INTEGER NULL,
+  UNIQUE INDEX `Product_productCode_key`(`productCode`),
+  UNIQUE INDEX `Product_sku_key`(`sku`),
+  UNIQUE INDEX `Product_slug_key`(`slug`),
+  PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE `ProductVariant` (
+  `id` INTEGER NOT NULL AUTO_INCREMENT,
+  `productId` INTEGER NOT NULL,
+  `colorId` INTEGER NULL,
+  `sizeId` INTEGER NULL,
+  `sku` VARCHAR(191) NOT NULL,
+  `barcode` VARCHAR(191) NULL,
+  `price` DECIMAL(65,30) NULL,
+  `mrp` DECIMAL(65,30) NULL,
+  `cost` DECIMAL(65,30) NULL,
+  `stock` INTEGER NOT NULL DEFAULT 0,
+  `weight` DOUBLE NULL,
+  `status` ENUM('ACTIVE','INACTIVE','OUT_OF_STOCK') NOT NULL DEFAULT 'ACTIVE',
+  `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt` DATETIME(3) NOT NULL,
+  UNIQUE INDEX `ProductVariant_sku_key`(`sku`),
+  PRIMARY KEY (`id`),
+  CONSTRAINT `ProductVariant_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `Product`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `ProductVariant_colorId_fkey` FOREIGN KEY (`colorId`) REFERENCES `Color`(`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `ProductVariant_sizeId_fkey` FOREIGN KEY (`sizeId`) REFERENCES `Size`(`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE `ProductMedia` (
+  `id` INTEGER NOT NULL AUTO_INCREMENT,
+  `productId` INTEGER NOT NULL,
+  `mediaType` ENUM('IMAGE','VIDEO','DOCUMENT') NOT NULL DEFAULT 'IMAGE',
+  `imageUrl` VARCHAR(191) NOT NULL,
+  `isPrimary` BOOLEAN NOT NULL DEFAULT false,
+  `displayOrder` INTEGER NOT NULL DEFAULT 0,
+  `altText` VARCHAR(191) NULL,
+  `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt` DATETIME(3) NOT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `ProductMedia_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `Product`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE `Attribute` (
+  `id` INTEGER NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(191) NOT NULL,
+  `code` VARCHAR(191) NOT NULL,
+  `description` VARCHAR(191) NULL,
+  `slug` VARCHAR(191) NOT NULL,
+  `status` ENUM('ACTIVE','INACTIVE','DRAFT') NOT NULL DEFAULT 'ACTIVE',
+  `isActive` BOOLEAN NOT NULL DEFAULT true,
+  `isDeleted` BOOLEAN NOT NULL DEFAULT false,
+  `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt` DATETIME(3) NOT NULL,
+  `createdBy` INTEGER NULL,
+  `updatedBy` INTEGER NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `Attribute_code_key`(`code`),
+  UNIQUE INDEX `Attribute_slug_key`(`slug`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE `AttributeValue` (
+  `id` INTEGER NOT NULL AUTO_INCREMENT,
+  `attributeId` INTEGER NOT NULL,
+  `value` VARCHAR(191) NOT NULL,
+  `code` VARCHAR(191) NULL,
+  `slug` VARCHAR(191) NULL,
+  `status` ENUM('ACTIVE','INACTIVE','DRAFT') NOT NULL DEFAULT 'ACTIVE',
+  `isActive` BOOLEAN NOT NULL DEFAULT true,
+  `isDeleted` BOOLEAN NOT NULL DEFAULT false,
+  `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt` DATETIME(3) NOT NULL,
+  `createdBy` INTEGER NULL,
+  `updatedBy` INTEGER NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `AttributeValue_attributeId_fkey` FOREIGN KEY (`attributeId`) REFERENCES `Attribute`(`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  UNIQUE INDEX `AttributeValue_attributeId_value_key`(`attributeId`, `value`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE `ProductAttribute` (
+  `productId` INTEGER NOT NULL,
+  `attributeValueId` INTEGER NOT NULL,
+  `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt` DATETIME(3) NOT NULL,
+  PRIMARY KEY (`productId`, `attributeValueId`),
+  CONSTRAINT `ProductAttribute_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `Product`(`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `ProductAttribute_attributeValueId_fkey` FOREIGN KEY (`attributeValueId`) REFERENCES `AttributeValue`(`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE `ProductTag` (
+  `productId` INTEGER NOT NULL,
+  `tagId` INTEGER NOT NULL,
+  `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updatedAt` DATETIME(3) NOT NULL,
+  PRIMARY KEY (`productId`, `tagId`),
+  CONSTRAINT `ProductTag_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `Product`(`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `ProductTag_tagId_fkey` FOREIGN KEY (`tagId`) REFERENCES `Tag`(`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

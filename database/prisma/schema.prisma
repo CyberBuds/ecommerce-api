@@ -1,0 +1,3283 @@
+generator client {
+  provider = "prisma-client-js"
+  
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum PermissionAction {
+  VIEW
+  CREATE
+  UPDATE
+  DELETE
+  EXPORT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum MasterStatus {
+  ACTIVE
+  INACTIVE
+  DRAFT
+}
+
+model Role {
+  id          Int               @id @default(autoincrement())
+  name        String            @unique
+  description String?
+  permissions RolePermission[]
+  users       User[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model Permission {
+  id          Int               @id @default(autoincrement())
+  resource    String
+  action      PermissionAction
+  roles       RolePermission[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@unique([resource, action])
+}
+
+model RolePermission {
+  id           Int        @id @default(autoincrement())
+  role         Role       @relation(fields: [roleId], references: [id])
+  roleId       Int
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  permissionId Int
+
+  @@unique([roleId, permissionId])
+}
+
+model User {
+  id            Int            @id @default(autoincrement())
+  employeeCode  String?        @unique
+  firstName     String
+  lastName      String
+  email         String         @unique
+  mobile        String?        @unique
+  password      String
+  profileImage  String?
+  gender        Gender?
+  dateOfBirth   DateTime?
+  role          Role?          @relation(fields: [roleId], references: [id])
+  roleId        Int?
+  status        UserStatus     @default(ACTIVE)
+  isActive      Boolean        @default(true)
+  isLocked      Boolean        @default(false)
+  lastLogin     DateTime?
+  refreshTokens RefreshToken[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  createdBy     Int?
+  updatedBy     Int?
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  revoked   Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token])
+}
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum CustomerAddressType {
+  BILLING
+  SHIPPING
+}
+
+enum WalletTransactionType {
+  CREDIT
+  DEBIT
+  REFUND
+  REWARD
+  ADJUSTMENT
+}
+
+enum LoyaltyTransactionType {
+  EARN
+  REDEEM
+  EXPIRE
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  WHATSAPP
+  PUSH
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum CustomerActivityType {
+  LOGIN
+  LOGOUT
+  REGISTER
+  PROFILE_UPDATE
+  PASSWORD_CHANGE
+  WISHLIST
+  ORDERS
+  REVIEWS
+}
+
+enum CustomerReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model CustomerGroup {
+  id           Int          @id @default(autoincrement())
+  name         String       @unique
+  code         String       @unique
+  description  String?
+  status       MasterStatus @default(ACTIVE)
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdBy    Int?
+  updatedBy    Int?
+  customers    Customer[]
+}
+
+model Customer {
+  id                Int                       @id @default(autoincrement())
+  customerCode      String                    @unique
+  firstName         String
+  lastName          String
+  email             String                    @unique
+  mobile            String?                   @unique
+  gender            Gender?
+  dateOfBirth       DateTime?
+  anniversaryDate   DateTime?
+  profileImage      String?
+  referralCode      String?                   @unique
+  referredBy        Customer?                 @relation("CustomerReferrals", fields: [referredById], references: [id])
+  referredById      Int?
+  referredCustomers Customer[]               @relation("CustomerReferrals")
+  walletBalance     Decimal                   @default(0)
+  loyaltyPoints     Int                       @default(0)
+  status            CustomerStatus            @default(ACTIVE)
+  isEmailVerified   Boolean                   @default(false)
+  isMobileVerified  Boolean                   @default(false)
+  lastLogin         DateTime?
+  customerGroup     CustomerGroup?            @relation(fields: [customerGroupId], references: [id])
+  customerGroupId   Int?
+  addresses         CustomerAddress[]
+  wishlist          CustomerWishlist[]
+  reviews           CustomerReview[]
+  walletTransactions CustomerWalletTransaction[]
+  storeCreditTransactions StoreCreditTransaction[]
+  loyaltyTransactions LoyaltyTransaction[]
+  notifications     CustomerNotification[]
+  activityLogs      CustomerActivityLog[]
+  notes             CustomerNote[]
+  documents         CustomerDocument[]
+  savedCarts        SavedCart[]
+  carts             Cart[]
+  orders            Order[]
+  payments          Payment[]
+  couponUsages      CouponUsage[]
+  abandonedCartRecoveries AbandonedCartRecovery[]
+  creditNotes       CreditNote[]
+  debitNotes        DebitNote[]
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  createdBy         Int?
+  updatedBy         Int?
+}
+
+model CustomerAddress {
+  id               Int                 @id @default(autoincrement())
+  customer         Customer            @relation(fields: [customerId], references: [id])
+  customerId       Int
+  addressType      CustomerAddressType
+  isDefaultBilling Boolean             @default(false)
+  isDefaultShipping Boolean            @default(false)
+  addressLine1     String
+  addressLine2     String?
+  city             String
+  state            String
+  country          String
+  pincode          String
+  latitude         Float?
+  longitude        Float?
+  status           MasterStatus        @default(ACTIVE)
+  billingOrders    Order[]             @relation("OrderBillingAddress")
+  shippingOrders   Order[]             @relation("OrderShippingAddress")
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  createdBy        Int?
+  updatedBy        Int?
+}
+
+model CustomerWishlist {
+  id         Int            @id @default(autoincrement())
+  customer   Customer       @relation(fields: [customerId], references: [id])
+  customerId Int
+  product    Product        @relation(fields: [productId], references: [id])
+  productId  Int
+  variant    ProductVariant? @relation(fields: [variantId], references: [id])
+  variantId  Int?
+  addedAt    DateTime       @default(now())
+
+  @@unique([customerId, productId, variantId])
+}
+
+model CustomerReview {
+  id           Int                 @id @default(autoincrement())
+  customer     Customer            @relation(fields: [customerId], references: [id])
+  customerId   Int
+  product      Product             @relation(fields: [productId], references: [id])
+  productId    Int
+  variant      ProductVariant?     @relation(fields: [variantId], references: [id])
+  variantId    Int?
+  rating       Int
+  reviewTitle  String
+  review       String
+  images       Json?
+  status       CustomerReviewStatus @default(PENDING)
+  approvedBy   Int?
+  approvedDate DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+}
+
+model CustomerWalletTransaction {
+  id            Int                   @id @default(autoincrement())
+  customer      Customer              @relation(fields: [customerId], references: [id])
+  customerId    Int
+  type          WalletTransactionType
+  amount        Decimal
+  reference     String?
+  remarks       String?
+  balanceAfter  Decimal
+  createdAt     DateTime              @default(now())
+}
+
+model LoyaltyTransaction {
+  id            Int                   @id @default(autoincrement())
+  customer      Customer              @relation(fields: [customerId], references: [id])
+  customerId    Int
+  type          LoyaltyTransactionType
+  points        Int
+  reference     String?
+  remarks       String?
+  balanceAfter  Int
+  createdAt     DateTime              @default(now())
+}
+
+model CustomerNotification {
+  id          Int                 @id @default(autoincrement())
+  customer    Customer            @relation(fields: [customerId], references: [id])
+  customerId  Int
+  channel     NotificationChannel
+  title       String
+  message     String
+  status      NotificationStatus @default(PENDING)
+  isRead      Boolean             @default(false)
+  sentAt      DateTime?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model CustomerActivityLog {
+  id           Int                  @id @default(autoincrement())
+  customer     Customer             @relation(fields: [customerId], references: [id])
+  customerId   Int
+  activityType CustomerActivityType
+  referenceId  Int?
+  description  String?
+  createdAt    DateTime             @default(now())
+}
+
+model CustomerNote {
+  id          Int        @id @default(autoincrement())
+  customer    Customer   @relation(fields: [customerId], references: [id])
+  customerId  Int
+  note        String
+  createdBy   Int?
+  updatedBy   Int?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model CustomerDocument {
+  id           Int        @id @default(autoincrement())
+  customer     Customer   @relation(fields: [customerId], references: [id])
+  customerId   Int
+  fileName     String
+  fileUrl      String
+  documentType String?
+  status       MasterStatus @default(ACTIVE)
+  uploadedBy   Int?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+enum CartStatus {
+  ACTIVE
+  SAVED
+  COMPLETED
+  ABANDONED
+}
+
+enum CouponType {
+  PERCENTAGE
+  FLAT
+  FREE_SHIPPING
+}
+
+model Cart {
+  id               Int             @id @default(autoincrement())
+  customer         Customer?       @relation(fields: [customerId], references: [id])
+  customerId       Int?
+  sessionId        String?         @unique
+  items            CartItem[]
+  coupon           Coupon?         @relation(fields: [couponId], references: [id])
+  couponId         Int?
+  shippingMethod   ShippingMethod? @relation(fields: [shippingMethodId], references: [id])
+  shippingMethodId Int?
+  deliverySlot     DeliverySlot?   @relation(fields: [deliverySlotId], references: [id])
+  deliverySlotId   Int?
+  savedCart       SavedCart?
+  abandonedCartRecovery AbandonedCartRecovery?
+  subtotal         Decimal         @default(0)
+  discountAmount   Decimal         @default(0)
+  couponDiscount   Decimal         @default(0)
+  shippingCharge   Decimal         @default(0)
+  taxAmount        Decimal         @default(0)
+  totalAmount      Decimal         @default(0)
+  status           CartStatus      @default(ACTIVE)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  createdBy        Int?
+  updatedBy        Int?
+}
+
+model CartItem {
+  id         Int            @id @default(autoincrement())
+  cart       Cart           @relation(fields: [cartId], references: [id])
+  cartId     Int
+  product    Product        @relation(fields: [productId], references: [id])
+  productId  Int
+  variant    ProductVariant? @relation(fields: [variantId], references: [id])
+  variantId  Int?
+  quantity   Int             @default(1)
+  unitPrice  Decimal
+  discount   Decimal         @default(0)
+  tax        Decimal         @default(0)
+  total      Decimal
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+}
+
+model Coupon {
+  id                         Int          @id @default(autoincrement())
+  couponCode                 String       @unique
+  title                      String
+  description                String?
+  couponType                 CouponType   @default(FLAT)
+  percentage                 Int?         
+  flatAmount                 Decimal?     
+  maximumDiscount            Decimal?     
+  minimumOrderAmount         Decimal?     
+  usageLimit                 Int?         
+  usagePerCustomer           Int?         
+  startDate                  DateTime
+  endDate                    DateTime
+  applicableCategories       Json?
+  applicableProducts         Json?
+  applicableCustomerGroups   Json?
+  status                     MasterStatus @default(ACTIVE)
+  createdAt                  DateTime      @default(now())
+  updatedAt                  DateTime      @updatedAt
+  usages                     CouponUsage[]
+  carts                      Cart[]
+  orders                     Order[]
+}
+
+model CouponUsage {
+  id             Int      @id @default(autoincrement())
+  customer       Customer @relation(fields: [customerId], references: [id])
+  customerId     Int
+  coupon         Coupon   @relation(fields: [couponId], references: [id])
+  couponId       Int
+  orderId        Int?
+  discountAmount Decimal
+  usedAt         DateTime @default(now())
+}
+
+enum BannerDisplayOn {
+  HOME
+  PRODUCT_PAGE
+  CATEGORY_PAGE
+  ALL
+}
+
+enum BannerPosition {
+  TOP
+  MIDDLE
+  BOTTOM
+  SIDEBAR
+}
+
+enum MarketingSectionType {
+  HERO_SLIDER
+  FEATURED_PRODUCTS
+  TRENDING_PRODUCTS
+  NEW_ARRIVALS
+  BEST_SELLERS
+  RECENTLY_VIEWED
+  RECOMMENDED_PRODUCTS
+  BRANDS
+  CATEGORIES
+  TESTIMONIALS
+  INSTAGRAM_FEED
+  BLOG_SECTION
+}
+
+enum CampaignStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+  DRAFT
+}
+
+enum CampaignType {
+  FLASH_SALE
+  DEAL_OF_THE_DAY
+  COMBO_OFFER
+  BUY_X_GET_Y
+  REFERRAL
+  POPUP
+  EMAIL
+  SMS
+  WHATSAPP
+  PUSH
+  GENERAL
+}
+
+enum PromotionDiscountType {
+  PERCENTAGE
+  FLAT
+}
+
+enum GiftCardStatus {
+  ACTIVE
+  REDEEMED
+  EXPIRED
+  CANCELLED
+}
+
+enum ReferralStatus {
+  ACTIVE
+  EXPIRED
+  COMPLETED
+}
+
+enum SubscriberStatus {
+  ACTIVE
+  UNSUBSCRIBED
+  BOUNCED
+}
+
+enum PopupType {
+  INFO
+  OFFER
+  EMAIL_CAPTURE
+  COUPON
+}
+
+enum MarketingChannel {
+  EMAIL
+  SMS
+  WHATSAPP
+  PUSH
+}
+
+enum AbandonedCartRecoveryStatus {
+  PENDING
+  SCHEDULED
+  RECOVERED
+  FAILED
+}
+
+enum StoreCreditType {
+  CREDIT
+  DEBIT
+  ADJUSTMENT
+  REWARD
+}
+
+model Banner {
+  id            Int            @id @default(autoincrement())
+  bannerCode    String         @unique
+  title         String
+  subtitle      String?
+  description   String?
+  imageId       Int?
+  mobileImageId Int?
+  buttonText    String?
+  buttonUrl     String?
+  position      BannerPosition @default(TOP)
+  priority      Int            @default(0)
+  startDate     DateTime?
+  endDate       DateTime?
+  displayOn     BannerDisplayOn @default(HOME)
+  status        CampaignStatus @default(ACTIVE)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model HomepageSection {
+  id          Int                 @id @default(autoincrement())
+  sectionType MarketingSectionType
+  title       String
+  description String?
+  metadata    Json?
+  priority    Int                 @default(0)
+  status      CampaignStatus      @default(ACTIVE)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model Campaign {
+  id               Int                      @id @default(autoincrement())
+  campaignCode     String                   @unique
+  campaignName     String
+  campaignType     CampaignType
+  description      String?
+  startDate        DateTime
+  endDate          DateTime
+  budget           Decimal                  @default(0)
+  priority         Int                      @default(0)
+  status           CampaignStatus           @default(DRAFT)
+  flashSales       FlashSale[]
+  deals            DealOfTheDay[]
+  comboOffers      ComboOffer[]
+  buyXGetYOffers   BuyXGetYOffer[]
+  channelCampaigns MarketingChannelCampaign[]
+  analytics        CampaignAnalytics[]
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+}
+
+model FlashSale {
+  id                        Int            @id @default(autoincrement())
+  campaign                  Campaign?      @relation(fields: [campaignId], references: [id])
+  campaignId                Int?
+  flashSaleName             String
+  startDate                 DateTime
+  endDate                   DateTime
+  products                  Json?
+  discountType              PromotionDiscountType
+  discountValue             Decimal
+  maximumDiscount           Decimal?       @default(0)
+  maximumQuantityPerCustomer Int?          @default(0)
+  status                    CampaignStatus @default(ACTIVE)
+  createdAt                 DateTime       @default(now())
+  updatedAt                 DateTime       @updatedAt
+}
+
+model DealOfTheDay {
+  id          Int            @id @default(autoincrement())
+  campaign    Campaign?      @relation(fields: [campaignId], references: [id])
+  campaignId  Int?
+  product     Product        @relation(fields: [productId], references: [id])
+  productId   Int
+  variant     ProductVariant? @relation(fields: [variantId], references: [id])
+  variantId   Int?
+  startDate   DateTime
+  endDate     DateTime
+  offerPrice  Decimal
+  status      CampaignStatus @default(ACTIVE)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model ComboOffer {
+  id           Int            @id @default(autoincrement())
+  campaign     Campaign?      @relation(fields: [campaignId], references: [id])
+  campaignId   Int?
+  offerName    String
+  productIds   Json?
+  bundlePrice  Decimal
+  discount     Decimal        @default(0)
+  status       CampaignStatus @default(ACTIVE)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model BuyXGetYOffer {
+  id            Int            @id @default(autoincrement())
+  campaign      Campaign?      @relation(fields: [campaignId], references: [id])
+  campaignId    Int?
+  buyProductId  Int
+  buyVariantId  Int?
+  buyQuantity   Int            @default(1)
+  getProductId  Int
+  getVariantId  Int?
+  getQuantity   Int            @default(1)
+  discount      Decimal        @default(0)
+  status        CampaignStatus @default(ACTIVE)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model GiftCard {
+  id            Int             @id @default(autoincrement())
+  giftCardCode  String          @unique
+  amount        Decimal
+  balance       Decimal         @default(0)
+  expiryDate    DateTime
+  status        GiftCardStatus  @default(ACTIVE)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model ReferralProgram {
+  id             Int            @id @default(autoincrement())
+  referralCode   String         @unique
+  referrerReward Decimal
+  refereeReward  Decimal
+  startDate      DateTime
+  endDate        DateTime
+  status         ReferralStatus @default(ACTIVE)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model StoreCreditTransaction {
+  id           Int              @id @default(autoincrement())
+  customer     Customer         @relation(fields: [customerId], references: [id])
+  customerId   Int
+  type         StoreCreditType
+  creditAmount Decimal          @default(0)
+  debitAmount  Decimal          @default(0)
+  balance      Decimal          @default(0)
+  reason       String?
+  reference    String?
+  createdAt    DateTime         @default(now())
+}
+
+model NewsletterSubscriber {
+  id           Int              @id @default(autoincrement())
+  email        String           @unique
+  status       SubscriberStatus @default(ACTIVE)
+  subscribedAt DateTime         @default(now())
+  unsubscribedAt DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model MarketingChannelCampaign {
+  id              Int              @id @default(autoincrement())
+  campaign        Campaign?        @relation(fields: [campaignId], references: [id])
+  campaignId      Int?
+  name            String
+  channel         MarketingChannel
+  subject         String?
+  message         String
+  targetAudience  String?
+  payload         Json?
+  scheduleAt      DateTime?
+  status          CampaignStatus  @default(DRAFT)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  analytics       CampaignAnalytics[]
+}
+
+model LandingPage {
+  id           Int            @id @default(autoincrement())
+  slug         String         @unique
+  seoTitle     String
+  seoDescription String?
+  metaKeywords String?
+  canonicalUrl String?
+  bannerId     Int?
+  sections     Json?
+  status       CampaignStatus @default(ACTIVE)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model AnnouncementBar {
+  id          Int          @id @default(autoincrement())
+  title       String
+  message     String
+  buttonText  String?
+  buttonUrl   String?
+  displayRule String?
+  priority    Int          @default(0)
+  startDate   DateTime?
+  endDate     DateTime?
+  status      CampaignStatus @default(ACTIVE)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model PopupCampaign {
+  id          Int          @id @default(autoincrement())
+  popupType   PopupType
+  imageId     Int?
+  offerText   String?
+  displayRule String?
+  frequency   String?
+  startDate   DateTime?
+  endDate     DateTime?
+  status      CampaignStatus @default(ACTIVE)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model AbandonedCartRecovery {
+  id              Int                         @id @default(autoincrement())
+  customer        Customer?                   @relation(fields: [customerId], references: [id])
+  customerId      Int?
+  cart            Cart?                       @relation(fields: [cartId], references: [id])
+  cartId          Int?                        @unique
+  reminderCount   Int                         @default(0)
+  lastReminderDate DateTime?
+  nextReminderAt  DateTime?
+  recoveryStatus  AbandonedCartRecoveryStatus @default(PENDING)
+  createdAt       DateTime                    @default(now())
+  updatedAt       DateTime                    @updatedAt
+}
+
+model MarketingTag {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  slug        String       @unique
+  description String?
+  metadata    Json?
+  status      MasterStatus @default(ACTIVE)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model CampaignAnalytics {
+  id                 Int              @id @default(autoincrement())
+  campaign           Campaign?        @relation(fields: [campaignId], references: [id])
+  campaignId         Int?
+  channelCampaign    MarketingChannelCampaign? @relation(fields: [channelCampaignId], references: [id])
+  channelCampaignId  Int?
+  impressions        Int              @default(0)
+  clicks             Int              @default(0)
+  conversions        Int              @default(0)
+  revenue            Decimal          @default(0)
+  ctr                Float            @default(0)
+  conversionRate     Float            @default(0)
+  roi                Float            @default(0)
+  date               DateTime         @default(now())
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+}
+
+model ShippingMethod {
+  id          Int          @id @default(autoincrement())
+  name        String
+  code        String       @unique
+  description String?
+  status      MasterStatus @default(ACTIVE)
+  charges     ShippingCharge[]
+  carts       Cart[]
+  orders      Order[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model ShippingZone {
+  id          Int          @id @default(autoincrement())
+  name        String
+  country     String
+  state       String?
+  city        String?
+  postalCode  String?
+  status      MasterStatus @default(ACTIVE)
+  charges     ShippingCharge[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model ShippingCharge {
+  id              Int             @id @default(autoincrement())
+  shippingMethod  ShippingMethod  @relation(fields: [shippingMethodId], references: [id])
+  shippingMethodId Int
+  zone            ShippingZone    @relation(fields: [zoneId], references: [id])
+  zoneId          Int
+  minimumWeight   Float?          @default(0)
+  maximumWeight   Float?          @default(0)
+  charge          Decimal         @default(0)
+  status          MasterStatus    @default(ACTIVE)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model DeliverySlot {
+  id                Int          @id @default(autoincrement())
+  date              DateTime
+  startTime         String
+  endTime           String
+  capacity          Int          @default(0)
+  remainingCapacity Int          @default(0)
+  status            MasterStatus @default(ACTIVE)
+  carts             Cart[]
+  orders            Order[]
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+}
+
+model SavedCart {
+  id          Int      @id @default(autoincrement())
+  customer    Customer @relation(fields: [customerId], references: [id])
+  customerId  Int
+  cart        Cart     @relation(fields: [cartId], references: [id])
+  cartId      Int      @unique
+  name        String?  
+  status      MasterStatus @default(ACTIVE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum OrderType {
+  ONLINE
+  OFFLINE
+  PHONE
+  B2B
+  B2C
+}
+
+enum OrderSource {
+  WEB
+  MOBILE
+  STORE
+  MARKETPLACE
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  PACKED
+  READY_TO_SHIP
+  SHIPPED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  RETURNED
+  REFUNDED
+  FAILED
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum FulfillmentStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum ShipmentStatus {
+  PENDING
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  CANCELLED
+}
+
+enum ReturnStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum RefundStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum RefundMode {
+  BANK_TRANSFER
+  WALLET
+  CREDIT_NOTE
+  OTHER
+}
+
+enum PaymentMethodType {
+  CASH_ON_DELIVERY
+  UPI
+  CREDIT_CARD
+  DEBIT_CARD
+  NET_BANKING
+  WALLET
+  GIFT_CARD
+}
+
+enum PaymentGatewayProvider {
+  RAZORPAY
+  STRIPE
+  PAYPAL
+  CASHFREE
+  PHONEPE
+  PAYTM
+  OFFLINE
+}
+
+enum PaymentStatusType {
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  CHARGEBACK
+  EXPIRED
+}
+
+enum PaymentTransactionType {
+  AUTHORIZATION
+  CAPTURE
+  SALE
+  REFUND
+  PARTIAL_REFUND
+  VOID
+  CHARGEBACK
+  REVERSAL
+}
+
+enum SettlementStatus {
+  PENDING
+  SETTLED
+  FAILED
+  PROCESSING
+}
+
+enum ReconciliationStatus {
+  MATCHED
+  MISMATCHED
+  PENDING
+  FAILED
+}
+
+enum CreditDebitNoteStatus {
+  DRAFT
+  ISSUED
+  CANCELLED
+  APPLIED
+}
+
+enum WebhookStatus {
+  PENDING
+  PROCESSED
+  FAILED
+}
+
+enum InvoicePaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum TaxRuleStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum GSTConfigurationStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum OrderItemStatus {
+  ACTIVE
+  CANCELLED
+  RETURNED
+}
+
+enum OrderTimelineEventType {
+  ORDER_PLACED
+  ORDER_CONFIRMED
+  ORDER_SHIPPED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  RETURN_REQUESTED
+  RETURN_APPROVED
+  REFUND_PROCESSED
+  NOTE_ADDED
+}
+
+model Order {
+  id                Int                 @id @default(autoincrement())
+  orderNumber       String              @unique
+  customer          Customer?           @relation(fields: [customerId], references: [id])
+  customerId        Int?
+  billingAddress    CustomerAddress     @relation("OrderBillingAddress", fields: [billingAddressId], references: [id])
+  billingAddressId  Int
+  shippingAddress   CustomerAddress     @relation("OrderShippingAddress", fields: [shippingAddressId], references: [id])
+  shippingAddressId Int
+  orderDate         DateTime            @default(now())
+  orderType         OrderType           @default(ONLINE)
+  orderSource       OrderSource         @default(WEB)
+  orderStatus       OrderStatus         @default(PENDING)
+  paymentStatus     PaymentStatus       @default(PENDING)
+  fulfillmentStatus FulfillmentStatus   @default(PENDING)
+  shippingMethod    ShippingMethod?     @relation(fields: [shippingMethodId], references: [id])
+  shippingMethodId  Int?
+  deliverySlot      DeliverySlot?       @relation(fields: [deliverySlotId], references: [id])
+  deliverySlotId    Int?
+  coupon            Coupon?             @relation(fields: [couponId], references: [id])
+  couponId          Int?
+  subtotal          Decimal             @default(0)
+  discountAmount    Decimal             @default(0)
+  couponDiscount    Decimal             @default(0)
+  shippingCharge    Decimal             @default(0)
+  taxAmount         Decimal             @default(0)
+  roundOff          Decimal             @default(0)
+  grandTotal        Decimal             @default(0)
+  currency          String              @default("INR")
+  exchangeRate      Decimal             @default(1)
+  remarks           String?
+  placedBy          Int?
+  items             OrderItem[]
+  statusHistory     OrderStatusHistory[]
+  timeline          OrderTimeline[]
+  shipments         Shipment[]
+  invoice           Invoice?
+  payments          Payment[]
+  returnRequests    ReturnRequest[]
+  refunds           Refund[]
+  notes             OrderNote[]
+  auditLogs         OrderAuditLog[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+model OrderItem {
+  id          Int            @id @default(autoincrement())
+  order       Order          @relation(fields: [orderId], references: [id])
+  orderId     Int
+  product     Product        @relation(fields: [productId], references: [id])
+  productId   Int
+  variant     ProductVariant? @relation(fields: [variantId], references: [id])
+  variantId   Int?
+  sku         String
+  productName String
+  variantName String?
+  quantity    Int             @default(1)
+  unitPrice   Decimal
+  discount    Decimal         @default(0)
+  tax         Decimal         @default(0)
+  netAmount   Decimal
+  costPrice   Decimal         @default(0)
+  profit      Decimal         @default(0)
+  status      OrderItemStatus @default(ACTIVE)
+  shipmentItems ShipmentItem[]
+  returnItems ReturnItem[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model Shipment {
+  id                    Int              @id @default(autoincrement())
+  shipmentNumber        String           @unique
+  order                 Order            @relation(fields: [orderId], references: [id])
+  orderId               Int
+  carrierName           String
+  trackingNumber        String?
+  trackingUrl           String?
+  dispatchDate          DateTime?
+  estimatedDeliveryDate DateTime?
+  deliveredDate         DateTime?
+  shippingCost          Decimal          @default(0)
+  status                ShipmentStatus   @default(PENDING)
+  items                 ShipmentItem[]
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+}
+
+model ShipmentItem {
+  id          Int      @id @default(autoincrement())
+  shipment    Shipment @relation(fields: [shipmentId], references: [id])
+  shipmentId  Int
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id])
+  orderItemId Int
+  quantity    Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Invoice {
+  id            Int           @id @default(autoincrement())
+  invoiceNumber String        @unique
+  order         Order         @relation(fields: [orderId], references: [id])
+  orderId       Int           @unique
+  invoiceDate   DateTime      @default(now())
+  invoiceStatus InvoiceStatus @default(DRAFT)
+  gstAmount     Decimal       @default(0)
+  cgst          Decimal       @default(0)
+  sgst          Decimal       @default(0)
+  igst          Decimal       @default(0)
+  discount      Decimal       @default(0)
+  roundOff      Decimal       @default(0)
+  netAmount     Decimal       @default(0)
+  invoicePdfUrl String?
+  payments      InvoicePayment[]
+  creditNotes   CreditNote[]
+  debitNotes    DebitNote[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model ReturnRequest {
+  id             Int          @id @default(autoincrement())
+  returnNumber   String       @unique
+  order          Order        @relation(fields: [orderId], references: [id])
+  orderId        Int
+  reason         String?
+  requestedDate  DateTime     @default(now())
+  approvedDate   DateTime?
+  rejectedDate   DateTime?
+  status         ReturnStatus @default(PENDING)
+  items          ReturnItem[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model ReturnItem {
+  id              Int           @id @default(autoincrement())
+  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id])
+  returnRequestId Int
+  orderItem       OrderItem     @relation(fields: [orderItemId], references: [id])
+  orderItemId     Int
+  quantity        Int           @default(1)
+  reason          String?
+  status          MasterStatus  @default(ACTIVE)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Refund {
+  id                   Int          @id @default(autoincrement())
+  refundNumber         String       @unique
+  order                Order        @relation(fields: [orderId], references: [id])
+  orderId              Int
+  refundMode           RefundMode   @default(BANK_TRANSFER)
+  refundAmount         Decimal      @default(0)
+  refundStatus         RefundStatus @default(PENDING)
+  transactionReference String?
+  refundDate           DateTime?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+}
+
+model PaymentMethod {
+  id          Int       @id @default(autoincrement())
+  code        String    @unique
+  name        String
+  description String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model PaymentGateway {
+  id            Int                    @id @default(autoincrement())
+  provider      PaymentGatewayProvider @unique
+  name          String
+  apiKey        String?
+  apiSecret     String?
+  webhookSecret String?
+  isActive      Boolean                @default(true)
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+}
+
+model Payment {
+  id                  Int                  @id @default(autoincrement())
+  paymentNumber       String               @unique
+  order               Order                @relation(fields: [orderId], references: [id])
+  orderId             Int
+  customer            Customer?            @relation(fields: [customerId], references: [id])
+  customerId          Int?
+  gateway             PaymentGatewayProvider
+  paymentMethod       PaymentMethodType
+  currency            String               @default("INR")
+  exchangeRate        Decimal              @default(1)
+  amount              Decimal              @default(0)
+  capturedAmount      Decimal              @default(0)
+  refundedAmount      Decimal              @default(0)
+  transactionReference String?
+  gatewayReference    String?
+  gatewayOrderId      String?
+  gatewayPaymentId    String?
+  gatewaySignature    String?
+  status              PaymentStatusType    @default(PENDING)
+  failureReason       String?
+  attemptCount        Int                  @default(0)
+  paidAt              DateTime?
+  transactions        PaymentTransaction[]
+  settlements         PaymentSettlement[]
+  webhooks            PaymentWebhook[]
+  invoicePayments     InvoicePayment[]
+  auditLogs           PaymentAuditLog[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+}
+
+model PaymentTransaction {
+  id                   Int                  @id @default(autoincrement())
+  payment              Payment              @relation(fields: [paymentId], references: [id])
+  paymentId            Int
+  type                 PaymentTransactionType
+  amount               Decimal              @default(0)
+  gatewayReference     String?
+  transactionReference String?
+  status               PaymentStatusType
+  remark               String?
+  executedAt           DateTime             @default(now())
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+}
+
+model PaymentWebhook {
+  id           Int           @id @default(autoincrement())
+  payment      Payment?      @relation(fields: [paymentId], references: [id])
+  paymentId    Int?
+  provider     PaymentGatewayProvider
+  eventType    String
+  payload      Json
+  headers      Json
+  verified     Boolean       @default(false)
+  status       WebhookStatus @default(PENDING)
+  response     Json?
+  error        String?
+  receivedAt   DateTime      @default(now())
+  processedAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model PaymentSettlement {
+  id            Int              @id @default(autoincrement())
+  payment       Payment?         @relation(fields: [paymentId], references: [id])
+  paymentId     Int?
+  settlementNumber String         @unique
+  gateway       PaymentGatewayProvider
+  settlementDate DateTime
+  grossAmount   Decimal          @default(0)
+  charges       Decimal          @default(0)
+  taxes         Decimal          @default(0)
+  netAmount     Decimal          @default(0)
+  status        SettlementStatus @default(PENDING)
+  remarks       String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+}
+
+model PaymentReconciliation {
+  id                         Int                  @id @default(autoincrement())
+  gatewayTransactionReference String
+  internalTransactionReference String
+  differenceAmount           Decimal              @default(0)
+  status                     ReconciliationStatus @default(PENDING)
+  remarks                    String?
+  createdAt                  DateTime             @default(now())
+  updatedAt                  DateTime             @updatedAt
+}
+
+model CreditNote {
+  id               Int                   @id @default(autoincrement())
+  creditNoteNumber String                @unique
+  invoice          Invoice               @relation(fields: [invoiceId], references: [id])
+  invoiceId        Int
+  customer         Customer              @relation(fields: [customerId], references: [id])
+  customerId       Int
+  reason           String?
+  amount           Decimal               @default(0)
+  status           CreditDebitNoteStatus @default(DRAFT)
+  issuedAt         DateTime              @default(now())
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+}
+
+model DebitNote {
+  id              Int                   @id @default(autoincrement())
+  debitNoteNumber String                @unique
+  invoice         Invoice               @relation(fields: [invoiceId], references: [id])
+  invoiceId       Int
+  customer        Customer              @relation(fields: [customerId], references: [id])
+  customerId      Int
+  reason          String?
+  amount          Decimal               @default(0)
+  status          CreditDebitNoteStatus @default(DRAFT)
+  issuedAt        DateTime              @default(now())
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+}
+
+model TaxConfiguration {
+  id          Int              @id @default(autoincrement())
+  name        String
+  description String?
+  gstRate     Decimal          @default(0)
+  cgstRate    Decimal          @default(0)
+  sgstRate    Decimal          @default(0)
+  igstRate    Decimal          @default(0)
+  cessRate    Decimal          @default(0)
+  hsnCode     String?
+  sacCode     String?
+  inclusive   Boolean          @default(false)
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model GSTConfiguration {
+  id        Int                    @id @default(autoincrement())
+  name      String
+  state     String?
+  gstRate   Decimal                @default(0)
+  cgst      Decimal                @default(0)
+  sgst      Decimal                @default(0)
+  igst      Decimal                @default(0)
+  cess      Decimal                @default(0)
+  hsnCode   String?
+  sacCode   String?
+  status    GSTConfigurationStatus @default(ACTIVE)
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+}
+
+model InvoicePayment {
+  id          Int                  @id @default(autoincrement())
+  invoice     Invoice              @relation(fields: [invoiceId], references: [id])
+  invoiceId   Int
+  payment     Payment              @relation(fields: [paymentId], references: [id])
+  paymentId   Int
+  amount      Decimal              @default(0)
+  status      InvoicePaymentStatus @default(PENDING)
+  paidAt      DateTime?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+}
+
+model PaymentAuditLog {
+  id         Int      @id @default(autoincrement())
+  payment    Payment  @relation(fields: [paymentId], references: [id])
+  paymentId  Int
+  action     String
+  actorId    Int?
+  details    Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model OrderNote {
+  id         Int      @id @default(autoincrement())
+  order      Order    @relation(fields: [orderId], references: [id])
+  orderId    Int
+  note       String
+  createdBy  Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model OrderStatusHistory {
+  id         Int         @id @default(autoincrement())
+  order      Order       @relation(fields: [orderId], references: [id])
+  orderId    Int
+  fromStatus OrderStatus
+  toStatus   OrderStatus
+  changedBy  Int?
+  remark     String?
+  createdAt  DateTime    @default(now())
+}
+
+model OrderTimeline {
+  id         Int                    @id @default(autoincrement())
+  order      Order                  @relation(fields: [orderId], references: [id])
+  orderId    Int
+  eventType  OrderTimelineEventType
+  description String
+  createdAt  DateTime               @default(now())
+}
+
+model OrderAuditLog {
+  id         Int      @id @default(autoincrement())
+  order      Order    @relation(fields: [orderId], references: [id])
+  orderId    Int
+  action     String
+  actorId    Int?
+  details    Json?
+  createdAt  DateTime @default(now())
+}
+
+model Category {
+  id            Int          @id @default(autoincrement())
+  name          String
+  code          String
+  description   String?
+  slug          String
+  image         String?
+  displayOrder  Int          @default(0)
+  status        MasterStatus @default(ACTIVE)
+  isActive      Boolean      @default(true)
+  isDeleted     Boolean      @default(false)
+  subCategories SubCategory[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  createdBy     Int?
+  updatedBy     Int?
+}
+
+model SubCategory {
+  id           Int          @id @default(autoincrement())
+  name         String
+  code         String
+  description  String?
+  slug         String
+  image        String?
+  displayOrder Int          @default(0)
+  status       MasterStatus @default(ACTIVE)
+  isActive     Boolean      @default(true)
+  isDeleted    Boolean      @default(false)
+  category     Category?    @relation(fields: [categoryId], references: [id])
+  categoryId   Int?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdBy    Int?
+  updatedBy    Int?
+}
+
+model Brand {
+  id           Int          @id @default(autoincrement())
+  name         String
+  code         String
+  description  String?
+  slug         String
+  image        String?
+  displayOrder Int          @default(0)
+  status       MasterStatus @default(ACTIVE)
+  isActive     Boolean      @default(true)
+  isDeleted    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdBy    Int?
+  updatedBy    Int?
+}
+
+model Fabric {
+  id           Int          @id @default(autoincrement())
+  name         String
+  code         String
+  description  String?
+  slug         String
+  image        String?
+  displayOrder Int          @default(0)
+  status       MasterStatus @default(ACTIVE)
+  isActive     Boolean      @default(true)
+  isDeleted    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdBy    Int?
+  updatedBy    Int?
+}
+
+model Color {
+  id           Int          @id @default(autoincrement())
+  name         String
+  code         String
+  description  String?
+  slug         String
+  image        String?
+  displayOrder Int          @default(0)
+  status       MasterStatus @default(ACTIVE)
+  isActive     Boolean      @default(true)
+  isDeleted    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdBy    Int?
+  updatedBy    Int?
+}
+
+model Size {
+  id           Int          @id @default(autoincrement())
+  name         String
+  code         String
+  description  String?
+  slug         String
+  image        String?
+  displayOrder Int          @default(0)
+  status       MasterStatus @default(ACTIVE)
+  isActive     Boolean      @default(true)
+  isDeleted    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdBy    Int?
+  updatedBy    Int?
+}
+
+model Unit {
+  id           Int          @id @default(autoincrement())
+  name         String
+  code         String
+  description  String?
+  slug         String
+  image        String?
+  displayOrder Int          @default(0)
+  status       MasterStatus @default(ACTIVE)
+  isActive     Boolean      @default(true)
+  isDeleted    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdBy    Int?
+  updatedBy    Int?
+}
+
+model Tax {
+  id           Int          @id @default(autoincrement())
+  name         String
+  code         String
+  description  String?
+  slug         String
+  image        String?
+  displayOrder Int          @default(0)
+  status       MasterStatus @default(ACTIVE)
+  isActive     Boolean      @default(true)
+  isDeleted    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdBy    Int?
+  updatedBy    Int?
+}
+
+model Occasion {
+  id           Int          @id @default(autoincrement())
+  name         String
+  code         String
+  description  String?
+  slug         String
+  image        String?
+  displayOrder Int          @default(0)
+  status       MasterStatus @default(ACTIVE)
+  isActive     Boolean      @default(true)
+  isDeleted    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdBy    Int?
+  updatedBy    Int?
+}
+
+model Pattern {
+  id           Int          @id @default(autoincrement())
+  name         String
+  code         String
+  description  String?
+  slug         String
+  image        String?
+  displayOrder Int          @default(0)
+  status       MasterStatus @default(ACTIVE)
+  isActive     Boolean      @default(true)
+  isDeleted    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdBy    Int?
+  updatedBy    Int?
+}
+
+model WeavingStyle {
+  id           Int          @id @default(autoincrement())
+  name         String
+  code         String
+  description  String?
+  slug         String
+  image        String?
+  displayOrder Int          @default(0)
+  status       MasterStatus @default(ACTIVE)
+  isActive     Boolean      @default(true)
+  isDeleted    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdBy    Int?
+  updatedBy    Int?
+}
+
+model BorderType {
+  id           Int          @id @default(autoincrement())
+  name         String
+  code         String
+  description  String?
+  slug         String
+  image        String?
+  displayOrder Int          @default(0)
+  status       MasterStatus @default(ACTIVE)
+  isActive     Boolean      @default(true)
+  isDeleted    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdBy    Int?
+  updatedBy    Int?
+}
+
+model WorkType {
+  id           Int          @id @default(autoincrement())
+  name         String
+  code         String
+  description  String?
+  slug         String
+  image        String?
+  displayOrder Int          @default(0)
+  status       MasterStatus @default(ACTIVE)
+  isActive     Boolean      @default(true)
+  isDeleted    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdBy    Int?
+  updatedBy    Int?
+}
+
+model SleeveType {
+  id           Int          @id @default(autoincrement())
+  name         String
+  code         String
+  description  String?
+  slug         String
+  image        String?
+  displayOrder Int          @default(0)
+  status       MasterStatus @default(ACTIVE)
+  isActive     Boolean      @default(true)
+  isDeleted    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdBy    Int?
+  updatedBy    Int?
+}
+
+model NeckType {
+  id           Int          @id @default(autoincrement())
+  name         String
+  code         String
+  description  String?
+  slug         String
+  image        String?
+  displayOrder Int          @default(0)
+  status       MasterStatus @default(ACTIVE)
+  isActive     Boolean      @default(true)
+  isDeleted    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdBy    Int?
+  updatedBy    Int?
+}
+
+model Tag {
+  id           Int          @id @default(autoincrement())
+  name         String
+  code         String
+  description  String?
+  slug         String
+  image        String?
+  displayOrder Int          @default(0)
+  status       MasterStatus @default(ACTIVE)
+  isActive     Boolean      @default(true)
+  isDeleted    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdBy    Int?
+  updatedBy    Int?
+  productTags  ProductTag[]
+}
+
+model CountryOfOrigin {
+  id           Int          @id @default(autoincrement())
+  name         String
+  code         String
+  description  String?
+  slug         String
+  image        String?
+  displayOrder Int          @default(0)
+  status       MasterStatus @default(ACTIVE)
+  isActive     Boolean      @default(true)
+  isDeleted    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdBy    Int?
+  updatedBy    Int?
+}
+
+model CareInstruction {
+  id           Int          @id @default(autoincrement())
+  name         String
+  code         String
+  description  String?
+  slug         String
+  image        String?
+  displayOrder Int          @default(0)
+  status       MasterStatus @default(ACTIVE)
+  isActive     Boolean      @default(true)
+  isDeleted    Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdBy    Int?
+  updatedBy    Int?
+}
+
+enum MediaStatus {
+  UPLOADED
+  PROCESSING
+  FAILED
+  DELETED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+model Media {
+  id              Int         @id @default(autoincrement())
+  fileName        String
+  originalName    String
+  extension       String
+  mimeType        String
+  fileSize        Int
+  width           Int?
+  height          Int?
+  duration        Int?
+  folder          String?
+  storageProvider String
+  publicId        String?
+  publicUrl       String?
+  thumbnailUrl    String?
+  uploadedBy      Int?
+  status          MediaStatus @default(UPLOADED)
+  isDeleted       Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+enum ProductStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  PUBLISHED
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum DiscountType {
+  NONE
+  PERCENTAGE
+  FIXED
+}
+
+enum ProductVariantStatus {
+  ACTIVE
+  INACTIVE
+  OUT_OF_STOCK
+}
+
+model Product {
+  id                  Int                @id @default(autoincrement())
+  productCode         String             @unique
+  sku                 String             @unique
+  barcode             String?
+  productName         String
+  slug                String             @unique
+  shortDescription    String?
+  description         String?
+  categoryId          Int?
+  subCategoryId       Int?
+  brandId             Int?
+  fabricId            Int?
+  unitId              Int?
+  gstId               Int?
+  countryOfOriginId  Int?
+  careInstructionId   Int?
+  occasionId          Int?
+  patternId           Int?
+  weavingStyleId      Int?
+  borderTypeId        Int?
+  workTypeId          Int?
+  weight              Float?
+  length              Float?
+  width               Float?
+  height              Float?
+  costPrice           Decimal?
+  sellingPrice        Decimal?
+  mrp                 Decimal?
+  discountType        DiscountType?      @default(NONE)
+  discountValue       Decimal?
+  taxAmount           Decimal?
+  netAmount           Decimal?
+  metaTitle           String?
+  metaDescription     String?
+  metaKeywords       String?
+  canonicalUrl        String?
+  schemaJsonLd        Json?
+  openGraph           Json?
+  twitterCard         Json?
+  seoScore            Int?
+  searchKeywords     String?
+  isFeatured          Boolean            @default(false)
+  isTrending          Boolean            @default(false)
+  isBestSeller        Boolean            @default(false)
+  isNewArrival        Boolean            @default(false)
+  status              ProductStatus      @default(DRAFT)
+  publishedAt         DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  createdBy           Int?
+  updatedBy           Int?
+  variants            ProductVariant[]
+  images              ProductMedia[]
+  attributes          ProductAttribute[]
+  tags                ProductTag[]
+  relations           ProductRelation[] @relation("ProductRelationParent")
+  relatedBy           ProductRelation[] @relation("ProductRelationTarget")
+  wishlistItems       CustomerWishlist[]
+  reviews             CustomerReview[]
+  cartItems           CartItem[]
+  orderItems          OrderItem[]
+  dealOfTheDay        DealOfTheDay[]
+  purchaseOrderItems  PurchaseOrderItem[]
+  grnItems            GoodsReceiptNoteItem[]
+  stockAdjustments    StockAdjustment[]
+  stockTransfers      StockTransfer[]
+  inventoryAuditLogs  InventoryAuditLog[]
+  stockMovements      StockMovement[]
+  inventories         Inventory[]
+  auditLogs           ProductAuditLog[]
+}
+
+model ProductVariant {
+  id             Int                  @id @default(autoincrement())
+  product        Product              @relation(fields: [productId], references: [id])
+  productId      Int
+  variantCode    String?              @unique
+  sku            String               @unique
+  barcode        String?
+  colorId        Int?
+  sizeId         Int?
+  weight         Float?
+  length         Float?
+  width          Float?
+  height         Float?
+  costPrice      Decimal?
+  sellingPrice   Decimal?
+  mrp            Decimal?
+  discountType   DiscountType?        @default(NONE)
+  discountValue  Decimal?
+  taxAmount      Decimal?
+  netAmount      Decimal?
+  stock          Int                  @default(0)
+  minimumStock   Int?                 @default(0)
+  maximumStock   Int?                 @default(0)
+  status         ProductVariantStatus @default(ACTIVE)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  purchaseOrderItems PurchaseOrderItem[]
+  grnItems            GoodsReceiptNoteItem[]
+  cartItems           CartItem[]
+  orderItems          OrderItem[]
+  dealOfTheDay        DealOfTheDay[]
+  stockAdjustments    StockAdjustment[]
+  stockTransfers      StockTransfer[]
+  inventoryAuditLogs  InventoryAuditLog[]
+  stockMovements StockMovement[]
+  inventories    Inventory[]
+  wishlistItems  CustomerWishlist[]
+  reviews        CustomerReview[]
+}
+
+model ProductMedia {
+  id            Int       @id @default(autoincrement())
+  product       Product   @relation(fields: [productId], references: [id])
+  productId     Int
+  mediaType     MediaType @default(IMAGE)
+  imageUrl      String
+  isPrimary     Boolean   @default(false)
+  displayOrder  Int       @default(0)
+  altText       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Attribute {
+  id           Int                 @id @default(autoincrement())
+  name         String
+  code         String              @unique
+  description  String?
+  slug         String              @unique
+  status       MasterStatus        @default(ACTIVE)
+  isActive     Boolean             @default(true)
+  isDeleted    Boolean             @default(false)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  createdBy    Int?
+  updatedBy    Int?
+  values       AttributeValue[]
+}
+
+model AttributeValue {
+  id                 Int                @id @default(autoincrement())
+  attribute          Attribute          @relation(fields: [attributeId], references: [id])
+  attributeId        Int
+  value              String
+  code               String?
+  slug               String?
+  status             MasterStatus       @default(ACTIVE)
+  isActive           Boolean            @default(true)
+  isDeleted          Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  createdBy          Int?
+  updatedBy          Int?
+  productAttributes  ProductAttribute[]
+
+  @@unique([attributeId, value])
+}
+
+model ProductAttribute {
+  product          Product        @relation(fields: [productId], references: [id])
+  productId        Int
+  attributeValue   AttributeValue @relation(fields: [attributeValueId], references: [id])
+  attributeValueId Int
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@id([productId, attributeValueId])
+}
+
+model ProductTag {
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int
+  tag       Tag     @relation(fields: [tagId], references: [id])
+  tagId     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([productId, tagId])
+}
+
+model ProductRelation {
+  id               Int              @id @default(autoincrement())
+  product          Product          @relation("ProductRelationParent", fields: [productId], references: [id])
+  productId        Int
+  relatedProduct   Product          @relation("ProductRelationTarget", fields: [relatedProductId], references: [id])
+  relatedProductId Int
+  relationType     ProductRelationType
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@unique([productId, relatedProductId, relationType])
+}
+
+model ProductAuditLog {
+  id          Int        @id @default(autoincrement())
+  product     Product    @relation(fields: [productId], references: [id])
+  productId   Int
+  actorId     Int?
+  action      String
+  details     Json?
+  previous    Json?
+  createdAt   DateTime   @default(now())
+}
+
+enum WarehouseStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum SupplierStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum InventoryStatus {
+  ACTIVE
+  INACTIVE
+  OUT_OF_STOCK
+  RESERVED
+}
+
+enum StockMovementType {
+  PURCHASE
+  SALE
+  RETURN
+  ADJUSTMENT
+  TRANSFER_IN
+  TRANSFER_OUT
+  DAMAGE
+  LOST
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  PARTIAL
+  COMPLETED
+  CANCELLED
+  REJECTED
+}
+
+enum GRNStatus {
+  PARTIAL_RECEIVED
+  COMPLETE_RECEIVED
+  REJECTED
+}
+
+enum StockAdjustmentType {
+  INCREASE
+  DECREASE
+}
+
+enum StockAdjustmentStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum StockTransferStatus {
+  PENDING
+  IN_TRANSIT
+  COMPLETED
+  CANCELLED
+  REJECTED
+}
+
+model Warehouse {
+  id                  Int                  @id @default(autoincrement())
+  warehouseCode       String               @unique
+  warehouseName       String
+  contactPerson       String?
+  phone               String?
+  email               String?
+  address             String?
+  city                String?
+  state               String?
+  country             String?
+  pincode             String?
+  status              WarehouseStatus      @default(ACTIVE)
+  inventories         Inventory[]
+  stockMovements      StockMovement[]
+  grns                GoodsReceiptNote[]
+  stockAdjustments    StockAdjustment[]
+  outgoingTransfers   StockTransfer[]      @relation("SourceWarehouse")
+  incomingTransfers   StockTransfer[]      @relation("DestinationWarehouse")
+  auditLogs           InventoryAuditLog[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  createdBy           Int?
+  updatedBy           Int?
+}
+
+model Supplier {
+  id             Int             @id @default(autoincrement())
+  supplierCode   String          @unique
+  supplierName   String
+  gstNumber      String?
+  contactPerson  String?
+  mobile         String?
+  email          String?
+  address        String?
+  city           String?
+  state          String?
+  country        String?
+  pincode        String?
+  status         SupplierStatus  @default(ACTIVE)
+  purchaseOrders PurchaseOrder[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  createdBy      Int?
+  updatedBy      Int?
+}
+
+model Inventory {
+  id             Int             @id @default(autoincrement())
+  product        Product         @relation(fields: [productId], references: [id])
+  productId      Int
+  variant        ProductVariant? @relation(fields: [variantId], references: [id])
+  variantId      Int?
+  warehouse      Warehouse       @relation(fields: [warehouseId], references: [id])
+  warehouseId    Int
+  currentStock   Int             @default(0)
+  reservedStock  Int             @default(0)
+  availableStock Int             @default(0)
+  minimumStock   Int             @default(0)
+  maximumStock   Int             @default(0)
+  reorderLevel   Int             @default(0)
+  status         InventoryStatus @default(ACTIVE)
+  stockMovements StockMovement[]
+  auditLogs      InventoryAuditLog[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  createdBy      Int?
+  updatedBy      Int?
+
+  @@unique([productId, variantId, warehouseId])
+}
+
+model StockMovement {
+  id              Int                 @id @default(autoincrement())
+  product         Product             @relation(fields: [productId], references: [id])
+  productId       Int
+  variant         ProductVariant?     @relation(fields: [variantId], references: [id])
+  variantId       Int?
+  warehouse       Warehouse           @relation(fields: [warehouseId], references: [id])
+  warehouseId     Int
+  inventory       Inventory?          @relation(fields: [inventoryId], references: [id])
+  inventoryId     Int?
+  movementType    StockMovementType
+  quantity        Int
+  referenceNumber String?
+  remarks         String?
+  date            DateTime            @default(now())
+  purchaseOrder   PurchaseOrder?      @relation(fields: [purchaseOrderId], references: [id])
+  purchaseOrderId Int?
+  grn             GoodsReceiptNote?   @relation(fields: [grnId], references: [id])
+  grnId           Int?
+  stockTransfer   StockTransfer?      @relation(fields: [stockTransferId], references: [id])
+  stockTransferId Int?
+  stockAdjustment StockAdjustment?    @relation(fields: [stockAdjustmentId], references: [id])
+  stockAdjustmentId Int?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+}
+
+model PurchaseOrder {
+  id            Int                 @id @default(autoincrement())
+  poNumber      String              @unique
+  supplier      Supplier            @relation(fields: [supplierId], references: [id])
+  supplierId    Int
+  orderDate     DateTime
+  expectedDate  DateTime?
+  status        PurchaseOrderStatus @default(PENDING)
+  totalAmount   Decimal             @default(0)
+  taxAmount     Decimal             @default(0)
+  netAmount     Decimal             @default(0)
+  remarks       String?
+  items         PurchaseOrderItem[]
+  stockMovements StockMovement[]
+  grns          GoodsReceiptNote[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  createdBy     Int?
+  updatedBy     Int?
+}
+
+model PurchaseOrderItem {
+  id             Int            @id @default(autoincrement())
+  purchaseOrder  PurchaseOrder  @relation(fields: [purchaseOrderId], references: [id])
+  purchaseOrderId Int
+  product        Product        @relation(fields: [productId], references: [id])
+  productId      Int
+  variant        ProductVariant? @relation(fields: [variantId], references: [id])
+  variantId      Int?
+  quantity       Int
+  rate           Decimal
+  discount       Decimal?        @default(0)
+  gst            Decimal?        @default(0)
+  netAmount      Decimal
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model GoodsReceiptNote {
+  id                 Int                    @id @default(autoincrement())
+  grnNumber          String                 @unique
+  purchaseOrder      PurchaseOrder          @relation(fields: [purchaseOrderId], references: [id])
+  purchaseOrderId    Int
+  warehouse          Warehouse              @relation(fields: [warehouseId], references: [id])
+  warehouseId        Int
+  receivedDate       DateTime              @default(now())
+  status             GRNStatus             @default(PARTIAL_RECEIVED)
+  totalReceivedAmount Decimal              @default(0)
+  rejectedQuantity   Int                    @default(0)
+  remarks            String?
+  items              GoodsReceiptNoteItem[]
+  stockMovements     StockMovement[]
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  createdBy          Int?
+  updatedBy          Int?
+}
+
+model GoodsReceiptNoteItem {
+  id               Int                @id @default(autoincrement())
+  grn              GoodsReceiptNote   @relation(fields: [grnId], references: [id])
+  grnId            Int
+  product          Product            @relation(fields: [productId], references: [id])
+  productId        Int
+  variant          ProductVariant?    @relation(fields: [variantId], references: [id])
+  variantId        Int?
+  quantity         Int
+  receivedQuantity Int
+  rejectedQuantity Int                @default(0)
+  rate             Decimal?
+  netAmount        Decimal?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model StockAdjustment {
+  id               Int                    @id @default(autoincrement())
+  adjustmentNumber String                 @unique
+  product          Product                @relation(fields: [productId], references: [id])
+  productId        Int
+  variant          ProductVariant?        @relation(fields: [variantId], references: [id])
+  variantId        Int?
+  warehouse        Warehouse              @relation(fields: [warehouseId], references: [id])
+  warehouseId      Int
+  adjustmentType   StockAdjustmentType
+  quantity         Int
+  reason           String
+  status           StockAdjustmentStatus @default(PENDING)
+  referenceNumber  String?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  stockMovements   StockMovement[]
+  createdBy        Int?
+  updatedBy        Int?
+}
+
+model StockTransfer {
+  id                    Int                 @id @default(autoincrement())
+  transferNumber        String              @unique
+  product               Product             @relation(fields: [productId], references: [id])
+  productId             Int
+  variant               ProductVariant?     @relation(fields: [variantId], references: [id])
+  variantId             Int?
+  sourceWarehouse       Warehouse           @relation("SourceWarehouse", fields: [sourceWarehouseId], references: [id])
+  sourceWarehouseId     Int
+  destinationWarehouse  Warehouse           @relation("DestinationWarehouse", fields: [destinationWarehouseId], references: [id])
+  destinationWarehouseId Int
+  quantity              Int
+  status                StockTransferStatus @default(PENDING)
+  referenceNumber       String?
+  remarks               String?
+  transferredAt         DateTime?
+  stockMovements        StockMovement[]
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  createdBy             Int?
+  updatedBy             Int?
+}
+
+model InventoryAuditLog {
+  id          Int        @id @default(autoincrement())
+  inventory   Inventory? @relation(fields: [inventoryId], references: [id])
+  inventoryId Int?
+  product     Product    @relation(fields: [productId], references: [id])
+  productId   Int
+  variant     ProductVariant? @relation(fields: [variantId], references: [id])
+  variantId   Int?
+  warehouse   Warehouse  @relation(fields: [warehouseId], references: [id])
+  warehouseId Int
+  actorId     Int?
+  action      String
+  details     Json?
+  previous    Json?
+  createdAt   DateTime   @default(now())
+}
+
+enum ProductRelationType {
+  RELATED
+  FREQUENTLY_BOUGHT_TOGETHER
+  CROSS_SELL
+  UP_SELL
+}
+
+// ============================================================
+// CMS, Content Management & SEO Models
+// ============================================================
+
+enum CmsPageStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  ARCHIVED
+}
+
+enum CmsPageType {
+  LANDING
+  CONTENT
+  HOME
+  CATEGORY
+  CUSTOM
+}
+
+enum CmsVisibility {
+  PUBLIC
+  PRIVATE
+  PASSWORD_PROTECTED
+}
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  ARCHIVED
+}
+
+enum FaqStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum TestimonialStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum LookbookStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum PolicyType {
+  PRIVACY_POLICY
+  TERMS_AND_CONDITIONS
+  REFUND_POLICY
+  SHIPPING_POLICY
+  CANCELLATION_POLICY
+  COOKIE_POLICY
+}
+
+enum ContactInquiryStatus {
+  NEW
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum MenuType {
+  HEADER
+  MEGA
+  FOOTER
+  MOBILE
+}
+
+enum RedirectType {
+  PERMANENT_301
+  TEMPORARY_302
+}
+
+enum SeoPageType {
+  HOME
+  PRODUCT
+  CATEGORY
+  BLOG
+  CMS_PAGE
+  LANDING_PAGE
+  BRAND
+  CUSTOM
+}
+
+enum ContentVersionStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// CMS Pages
+model CmsPage {
+  id               Int             @id @default(autoincrement())
+  pageCode         String          @unique
+  title            String
+  slug             String          @unique
+  shortDescription String?
+  content          String?         @db.LongText
+  featuredImageId  Int?
+  template         String?
+  layout           String?
+  pageType         CmsPageType     @default(CONTENT)
+  visibility       CmsVisibility   @default(PUBLIC)
+  status           CmsPageStatus   @default(DRAFT)
+  publishedAt      DateTime?
+  createdBy        Int?
+  updatedBy        Int?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  seoMeta          SeoMeta?
+  versions         ContentVersion[]
+}
+
+// Blog Category
+model BlogCategory {
+  id           Int         @id @default(autoincrement())
+  categoryName String
+  slug         String      @unique
+  description  String?
+  displayOrder Int         @default(0)
+  status       FaqStatus   @default(ACTIVE)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  posts        BlogPost[]
+}
+
+// Blog Tags
+model BlogTag {
+  id        Int        @id @default(autoincrement())
+  tagName   String
+  slug      String     @unique
+  createdAt DateTime   @default(now())
+  posts     BlogPostTag[]
+}
+
+// Blog Posts
+model BlogPost {
+  id              Int           @id @default(autoincrement())
+  title           String
+  slug            String        @unique
+  excerpt         String?
+  content         String?       @db.LongText
+  featuredImageId Int?
+  authorId        Int?
+  category        BlogCategory? @relation(fields: [categoryId], references: [id])
+  categoryId      Int?
+  readingTime     Int?
+  views           Int           @default(0)
+  likes           Int           @default(0)
+  commentsEnabled Boolean       @default(true)
+  status          BlogStatus    @default(DRAFT)
+  publishedAt     DateTime?
+  scheduledAt     DateTime?
+  createdBy       Int?
+  updatedBy       Int?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  tags            BlogPostTag[]
+  seoMeta         SeoMeta?
+  versions        ContentVersion[]
+}
+
+// Blog Post Tags (junction)
+model BlogPostTag {
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    Int
+  tag       BlogTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId     Int
+
+  @@id([postId, tagId])
+}
+
+// FAQs
+model Faq {
+  id           Int       @id @default(autoincrement())
+  question     String
+  answer       String    @db.LongText
+  category     String?
+  displayOrder Int       @default(0)
+  status       FaqStatus @default(ACTIVE)
+  createdBy    Int?
+  updatedBy    Int?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+// Testimonials
+model Testimonial {
+  id           Int               @id @default(autoincrement())
+  customerName String
+  designation  String?
+  company      String?
+  imageId      Int?
+  review       String            @db.Text
+  rating       Int               @default(5)
+  displayOrder Int               @default(0)
+  status       TestimonialStatus @default(ACTIVE)
+  createdBy    Int?
+  updatedBy    Int?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+}
+
+// Lookbooks
+model Lookbook {
+  id             Int            @id @default(autoincrement())
+  collectionName String
+  season         String?
+  description    String?        @db.Text
+  bannerImageId  Int?
+  galleryImages  Json?
+  status         LookbookStatus @default(DRAFT)
+  publishedAt    DateTime?
+  createdBy      Int?
+  updatedBy      Int?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+// Style Guides
+model StyleGuide {
+  id          Int       @id @default(autoincrement())
+  guideName   String
+  description String?   @db.Text
+  images      Json?
+  products    Json?
+  status      FaqStatus @default(ACTIVE)
+  createdBy   Int?
+  updatedBy   Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// Size Guides
+model SizeGuide {
+  id              Int       @id @default(autoincrement())
+  category        String
+  brand           String?
+  measurementUnit String    @default("cm")
+  chart           Json
+  images          Json?
+  status          FaqStatus @default(ACTIVE)
+  createdBy       Int?
+  updatedBy       Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// Static Policies
+model Policy {
+  id         Int        @id @default(autoincrement())
+  policyType PolicyType @unique
+  title      String
+  content    String     @db.LongText
+  isActive   Boolean    @default(true)
+  updatedBy  Int?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  versions   ContentVersion[]
+}
+
+// Contact Us Information
+model ContactInfo {
+  id             Int      @id @default(autoincrement())
+  companyName    String
+  address        String?  @db.Text
+  phone          String?
+  email          String?
+  whatsapp       String?
+  googleMapUrl   String?
+  businessHours  Json?
+  isActive       Boolean  @default(true)
+  updatedBy      Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// Contact Inquiries
+model ContactInquiry {
+  id           Int                  @id @default(autoincrement())
+  customerName String
+  email        String
+  mobile       String?
+  subject      String
+  message      String               @db.Text
+  attachmentId Int?
+  status       ContactInquiryStatus @default(NEW)
+  assignedTo   Int?
+  resolvedAt   DateTime?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+}
+
+// Dynamic Menus
+model DynamicMenu {
+  id           Int       @id @default(autoincrement())
+  menuCode     String    @unique
+  menuType     MenuType
+  title        String
+  items        Json
+  isActive     Boolean   @default(true)
+  displayOrder Int       @default(0)
+  createdBy    Int?
+  updatedBy    Int?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+// Footer Management
+model FooterConfig {
+  id           Int      @id @default(autoincrement())
+  configCode   String   @unique
+  columns      Json?
+  quickLinks   Json?
+  categories   Json?
+  services     Json?
+  newsletter   Json?
+  copyright    String?
+  isActive     Boolean  @default(true)
+  updatedBy    Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// Social Media Links
+model SocialMediaLink {
+  id        Int      @id @default(autoincrement())
+  platform  String   @unique
+  url       String
+  iconClass String?
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// SEO Meta
+model SeoMeta {
+  id            Int         @id @default(autoincrement())
+  pageType      SeoPageType
+  referenceId   Int?
+  slug          String?     @unique
+  metaTitle     String?
+  metaDesc      String?     @db.Text
+  metaKeywords  String?
+  canonicalUrl  String?
+  robotsMeta    String?     @default("index, follow")
+  ogTitle       String?
+  ogDescription String?     @db.Text
+  ogImageId     Int?
+  twitterTitle  String?
+  twitterDesc   String?     @db.Text
+  twitterCard   String?     @default("summary_large_image")
+  schemaJson    Json?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  cmsPage       CmsPage?    @relation(fields: [cmsPageId], references: [id])
+  cmsPageId     Int?        @unique
+  blogPost      BlogPost?   @relation(fields: [blogPostId], references: [id])
+  blogPostId    Int?        @unique
+}
+
+// Sitemap Entry
+model SitemapEntry {
+  id            Int      @id @default(autoincrement())
+  url           String   @unique
+  changeFreq    String   @default("weekly")
+  priority      Float    @default(0.5)
+  lastModified  DateTime @default(now())
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Robots.txt Configuration
+model RobotsConfig {
+  id        Int      @id @default(autoincrement())
+  content   String   @db.Text
+  isActive  Boolean  @default(true)
+  updatedBy Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Redirect Manager
+model Redirect {
+  id             Int          @id @default(autoincrement())
+  sourceUrl      String       @unique
+  destinationUrl String
+  redirectType   RedirectType @default(PERMANENT_301)
+  hitCount       Int          @default(0)
+  isActive       Boolean      @default(true)
+  createdBy      Int?
+  updatedBy      Int?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+// URL Rewrite
+model UrlRewrite {
+  id        Int      @id @default(autoincrement())
+  oldUrl    String   @unique
+  newUrl    String
+  isActive  Boolean  @default(true)
+  createdBy Int?
+  updatedBy Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================================
+// Reports, Analytics & Business Intelligence Models
+// ============================================================
+
+enum ReportScheduleFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum ReportScheduleStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+enum ReportExportFormat {
+  EXCEL
+  CSV
+  PDF
+  JSON
+}
+
+enum ReportExportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model ScheduledReport {
+  id          Int                     @id @default(autoincrement())
+  reportCode  String                  @unique
+  reportName  String
+  reportType  String
+  frequency   ReportScheduleFrequency
+  filters     Json?
+  recipients  Json?
+  nextRunAt   DateTime
+  lastRunAt   DateTime?
+  status      ReportScheduleStatus    @default(ACTIVE)
+  createdBy   Int?
+  updatedBy   Int?
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+}
+
+model ReportExportLog {
+  id          Int                @id @default(autoincrement())
+  reportType  String
+  format      ReportExportFormat
+  filters     Json?
+  filePath    String?
+  fileSize    Int?
+  status      ReportExportStatus @default(PENDING)
+  requestedBy Int?
+  completedAt DateTime?
+  error       String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+}
+
+// Content Version History
+model ContentVersion {
+  id          Int                  @id @default(autoincrement())
+  entityType  String
+  entityId    Int
+  version     Int
+  content     Json
+  status      ContentVersionStatus @default(DRAFT)
+  changedBy   Int?
+  changedAt   DateTime             @default(now())
+  cmsPage     CmsPage?             @relation(fields: [cmsPageId], references: [id])
+  cmsPageId   Int?
+  blogPost    BlogPost?            @relation(fields: [blogPostId], references: [id])
+  blogPostId  Int?
+  policy      Policy?              @relation(fields: [policyId], references: [id])
+  policyId    Int?
+}
+
+// ============================================================
+// System Administration & Configuration Models
+// ============================================================
+
+enum ApiKeyStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum IntegrationProvider {
+  RAZORPAY
+  STRIPE
+  PAYPAL
+  CASHFREE
+  PHONEPE
+  PAYTM
+  SHIPROCKET
+  DELHIVERY
+  GOOGLE_MAPS
+  GOOGLE_ANALYTICS
+  GOOGLE_TAG_MANAGER
+  FACEBOOK_PIXEL
+  CLOUDINARY
+  AWS_S3
+}
+
+enum IntegrationStatus {
+  ACTIVE
+  INACTIVE
+  TESTING
+}
+
+enum SchedulerJobStatus {
+  ACTIVE
+  PAUSED
+  DISABLED
+}
+
+enum SysActivityType {
+  LOGIN
+  LOGOUT
+  LOGIN_FAILED
+  PASSWORD_CHANGED
+  PROFILE_UPDATED
+  CONFIG_CHANGED
+  API_KEY_CREATED
+  API_KEY_REVOKED
+  BACKUP_CREATED
+  BACKUP_RESTORED
+}
+
+enum BackupType {
+  DATABASE
+  MEDIA
+  CONFIGURATION
+  FULL
+}
+
+enum BackupStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+model CompanyProfile {
+  id            Int      @id @default(autoincrement())
+  companyName   String
+  legalName     String?
+  gstNumber     String?
+  panNumber     String?
+  logoId        Int?
+  faviconId     Int?
+  email         String
+  phone         String
+  whatsapp      String?
+  website       String?
+  address       String?
+  country       String?
+  state         String?
+  city          String?
+  pincode       String?
+  invoicePrefix String   @default("INV")
+  currency      String   @default("INR")
+  timezone      String   @default("Asia/Kolkata")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model StoreSettings {
+  id              Int      @id @default(autoincrement())
+  storeName       String
+  storeUrl        String?
+  supportEmail    String?
+  supportMobile   String?
+  orderPrefix     String   @default("ORD")
+  invoicePrefix   String   @default("INV")
+  shipmentPrefix  String   @default("SHP")
+  returnPrefix    String   @default("RET")
+  currency        String   @default("INR")
+  language        String   @default("en")
+  timezone        String   @default("Asia/Kolkata")
+  maintenanceMode Boolean  @default(false)
+  maintenanceMsg  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model AppSettings {
+  id                  Int      @id @default(autoincrement())
+  registrationEnabled Boolean  @default(true)
+  guestCheckout       Boolean  @default(true)
+  wishlistEnabled     Boolean  @default(true)
+  reviewsEnabled      Boolean  @default(true)
+  codEnabled          Boolean  @default(true)
+  inventoryTracking   Boolean  @default(true)
+  lowStockAlert       Boolean  @default(true)
+  lowStockThreshold   Int      @default(10)
+  autoInvoice         Boolean  @default(true)
+  autoShipment        Boolean  @default(false)
+  autoRefund          Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model ThemeSettings {
+  id             Int      @id @default(autoincrement())
+  primaryColor   String   @default("#007bff")
+  secondaryColor String   @default("#6c757d")
+  accentColor    String?
+  logoId         Int?
+  darkMode       Boolean  @default(false)
+  layout         String   @default("default")
+  typography     String   @default("default")
+  customCss      String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model SysCurrency {
+  id           Int      @id @default(autoincrement())
+  code         String   @unique
+  name         String
+  symbol       String
+  exchangeRate Decimal  @default(1) @db.Decimal(15, 6)
+  isDefault    Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model SysLanguage {
+  id         Int      @id @default(autoincrement())
+  code       String   @unique
+  name       String
+  nativeName String?
+  isRtl      Boolean  @default(false)
+  isDefault  Boolean  @default(false)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+
+model EmailConfiguration {
+  id           Int       @id @default(autoincrement())
+  smtpHost     String
+  smtpPort     Int       @default(587)
+  username     String
+  password     String
+  encryption   String    @default("TLS")
+  fromEmail    String
+  fromName     String
+  isActive     Boolean   @default(true)
+  lastTestedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model SmsConfiguration {
+  id        Int      @id @default(autoincrement())
+  provider  String
+  apiKey    String
+  senderId  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WhatsAppConfiguration {
+  id          Int      @id @default(autoincrement())
+  provider    String
+  apiKey      String
+  phoneNumber String?
+  templateIds Json?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PushNotificationConfig {
+  id                Int      @id @default(autoincrement())
+  provider          String
+  firebaseServerKey String?
+  oneSignalAppId    String?
+  oneSignalApiKey   String?
+  vapidPublicKey    String?
+  vapidPrivateKey   String?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model NotificationTemplate {
+  id           Int                 @id @default(autoincrement())
+  templateCode String              @unique
+  templateName String
+  channel      NotificationChannel
+  event        String
+  subject      String?
+  body         String              @db.Text
+  variables    Json?
+  isActive     Boolean             @default(true)
+  createdBy    Int?
+  updatedBy    Int?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+}
+
+model ApiKey {
+  id          Int          @id @default(autoincrement())
+  name        String
+  keyHash     String       @unique
+  keyPrefix   String
+  secret      String
+  permissions Json?
+  expiresAt   DateTime?
+  lastUsedAt  DateTime?
+  status      ApiKeyStatus @default(ACTIVE)
+  createdBy   Int?
+  updatedBy   Int?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model ThirdPartyIntegration {
+  id            Int                 @id @default(autoincrement())
+  provider      IntegrationProvider @unique
+  displayName   String
+  apiKey        String?
+  apiSecret     String?
+  webhookSecret String?
+  webhookUrl    String?
+  extraConfig   Json?
+  status        IntegrationStatus   @default(INACTIVE)
+  lastTestedAt  DateTime?
+  createdBy     Int?
+  updatedBy     Int?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+}
+
+model FeatureFlag {
+  id             Int      @id @default(autoincrement())
+  flagKey        String   @unique
+  flagName       String
+  description    String?
+  isEnabled      Boolean  @default(false)
+  rolloutPercent Int      @default(0)
+  environment    String   @default("all")
+  conditions     Json?
+  createdBy      Int?
+  updatedBy      Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model SchedulerJob {
+  id             Int                @id @default(autoincrement())
+  jobKey         String             @unique
+  jobName        String
+  description    String?
+  cronExpression String
+  handler        String
+  params         Json?
+  status         SchedulerJobStatus @default(ACTIVE)
+  lastRunAt      DateTime?
+  lastRunStatus  String?
+  lastRunError   String?
+  nextRunAt      DateTime?
+  runCount       Int                @default(0)
+  createdBy      Int?
+  updatedBy      Int?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int?
+  userEmail  String?
+  action     String
+  module     String
+  entityType String?
+  entityId   Int?
+  oldValue   Json?
+  newValue   Json?
+  ipAddress  String?
+  userAgent  String?
+  device     String?
+  createdAt  DateTime @default(now())
+}
+
+model ActivityLog {
+  id           Int             @id @default(autoincrement())
+  userId       Int?
+  userEmail    String?
+  activityType SysActivityType
+  description  String?
+  ipAddress    String?
+  userAgent    String?
+  device       String?
+  status       String          @default("SUCCESS")
+  createdAt    DateTime        @default(now())
+}
+
+model ErrorLog {
+  id            Int      @id @default(autoincrement())
+  errorCode     String?
+  message       String   @db.Text
+  stack         String?  @db.Text
+  errorType     String   @default("APPLICATION")
+  module        String?
+  requestUrl    String?
+  requestMethod String?
+  userId        Int?
+  ipAddress     String?
+  environment   String?
+  createdAt     DateTime @default(now())
+}
+
+model SecuritySettings {
+  id                     Int      @id @default(autoincrement())
+  minPasswordLength      Int      @default(8)
+  requireUppercase       Boolean  @default(true)
+  requireLowercase       Boolean  @default(true)
+  requireNumbers         Boolean  @default(true)
+  requireSpecialChars    Boolean  @default(false)
+  sessionTimeoutMinutes  Int      @default(60)
+  jwtExpiryMinutes       Int      @default(15)
+  refreshTokenExpiryDays Int      @default(7)
+  maxLoginAttempts       Int      @default(5)
+  lockoutDurationMinutes Int      @default(30)
+  ipWhitelist            Json?
+  ipBlacklist            Json?
+  corsOrigins            Json?
+  twoFactorEnabled       Boolean  @default(false)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+model BackupRecord {
+  id          Int          @id @default(autoincrement())
+  backupCode  String       @unique
+  backupType  BackupType
+  filePath    String?
+  fileSize    BigInt?
+  status      BackupStatus @default(PENDING)
+  isScheduled Boolean      @default(false)
+  startedAt   DateTime?
+  completedAt DateTime?
+  error       String?
+  restoredAt  DateTime?
+  createdBy   Int?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model FileStorageConfig {
+  id               Int      @id @default(autoincrement())
+  provider         String   @default("LOCAL")
+  localUploadPath  String?
+  cloudinaryCloud  String?
+  cloudinaryKey    String?
+  cloudinarySecret String?
+  awsBucket        String?
+  awsRegion        String?
+  awsAccessKey     String?
+  awsSecretKey     String?
+  maxFileSizeMb    Int      @default(10)
+  allowedTypes     Json?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model LicenseInfo {
+  id            Int       @id @default(autoincrement())
+  licenseKey    String
+  productName   String
+  licensedTo    String
+  email         String
+  plan          String
+  maxUsers      Int?
+  expiresAt     DateTime?
+  isValid       Boolean   @default(true)
+  lastCheckedAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model SystemVersion {
+  id          Int      @id @default(autoincrement())
+  version     String
+  buildNumber String?
+  releaseDate DateTime
+  changelog   String?  @db.Text
+  isLatest    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model EnvironmentConfig {
+  id          Int      @id @default(autoincrement())
+  configKey   String   @unique
+  configValue String   @db.Text
+  isSensitive Boolean  @default(false)
+  description String?
+  environment String   @default("all")
+  isActive    Boolean  @default(true)
+  createdBy   Int?
+  updatedBy   Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

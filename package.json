@@ -5,15 +5,15 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only --no-notify src/server.ts",
-    "build": "prisma generate --schema=../../database/prisma/schema.prisma && tsc -p tsconfig.json",
+    "build": "prisma generate --schema=database/prisma/schema.prisma && tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "lint": "eslint 'src/**/*.{ts,tsx}' --max-warnings=0",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,md}\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prisma:generate": "prisma generate --schema=../../database/prisma/schema.prisma",
-    "prisma:migrate:dev": "prisma migrate dev --schema=../../database/prisma/schema.prisma",
-    "prisma:migrate:deploy": "prisma migrate deploy --schema=../../database/prisma/schema.prisma",
-    "prisma:seed": "node ../../database/seed.cjs",
+    "prisma:generate": "prisma generate --schema=database/prisma/schema.prisma",
+    "prisma:migrate:dev": "prisma migrate dev --schema=database/prisma/schema.prisma",
+    "prisma:migrate:deploy": "prisma migrate deploy --schema=database/prisma/schema.prisma",
+    "prisma:seed": "node database/seed.cjs",
     "clean": "rimraf dist"
   },
   "dependencies": {
