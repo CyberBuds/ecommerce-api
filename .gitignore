@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Build
+dist/
+build/
+coverage/
+deploy/
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Runtime
+*.pid
+
+# Temporary
+.tmp/
+temp/
+
+# Archives
+*.zip
+*.tar
+*.gz
+
+# Prisma generated files (if applicable)
+src/prisma/
+
+# Tests
+coverage/
+
+# Misc
+.cache/
