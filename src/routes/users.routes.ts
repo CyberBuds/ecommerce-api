@@ -6,8 +6,7 @@ import authenticate from '../middlewares/authenticate';
 import authorize from '../middlewares/authorize';
 import multer from 'multer';
 
-const upload = multer({ dest: 'uploads/' });
-
+const upload = multer({ storage: multer.memoryStorage() });
 const router = Router();
 
 // Protect routes - assume authenticate middleware sets req.user

@@ -4,7 +4,7 @@ dotenv.config();
 
 export interface EnvConfig {
   NODE_ENV: 'development' | 'production' | 'test';
-  PORT: number;
+  PORT: string | number;
   DATABASE_URL: string;
   JWT_SECRET: string;
   JWT_EXPIRES_IN: string;
@@ -38,7 +38,6 @@ export interface EnvConfig {
 
 const required = [
   'NODE_ENV',
-  
   'DATABASE_URL',
   'JWT_SECRET',
   'JWT_EXPIRES_IN',
@@ -53,9 +52,21 @@ for (const key of required) {
   }
 }
 
+// PORT can be a normal numeric string (local/dev/most hosts) OR a named pipe
+// path like \\.\pipe\xxxxxxxx-xxxx-... (IIS/iisnode on Windows/Plesk).
+// Number("\\.\pipe\...") is NaN, so we only coerce to a number when it's
+// actually numeric; otherwise we pass the raw string straight to
+// http.Server.listen(), which accepts both a port number and a pipe path.
+function resolvePort(): string | number {
+  const raw = process.env.PORT;
+  if (!raw) return 4000;
+  const asNumber = Number(raw);
+  return isNaN(asNumber) ? raw : asNumber;
+}
+
 const config: EnvConfig = {
   NODE_ENV: (process.env.NODE_ENV as EnvConfig['NODE_ENV']) || 'development',
-  PORT: Number(process.env.PORT) || 4000,
+  PORT: resolvePort(),
   DATABASE_URL: process.env.DATABASE_URL as string,
   JWT_SECRET: process.env.JWT_SECRET as string,
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN as string,
