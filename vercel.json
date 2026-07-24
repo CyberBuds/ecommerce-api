@@ -1,7 +1,7 @@
 {
   "functions": {
     "dist/server.js": {
-      "includeFiles": "node_modules/swagger-ui-dist/**"
+      "includeFiles": "node_modules/.pnpm/swagger-ui-dist@5.32.9/node_modules/swagger-ui-dist/**"
     }
   }
 }
