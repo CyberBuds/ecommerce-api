@@ -87,6 +87,8 @@ model User {
   updatedAt     DateTime       @updatedAt
   createdBy     Int?
   updatedBy     Int?
+
+    @@map("user")
 }
 
 model RefreshToken {
@@ -99,6 +101,7 @@ model RefreshToken {
   createdAt DateTime @default(now())
 
   @@index([token])
+    @@map("refreshtoken")
 }
 
 enum CustomerStatus {
