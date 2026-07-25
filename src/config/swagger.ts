@@ -21,7 +21,7 @@ const swaggerOptions: Options = {
         description: 'Development Server',
       },
       {
-        url: 'https://api.saree-ecommerce.com',
+        url: 'https://ecommerce-api-p93q.onrender.com',
         description: 'Production Server',
       },
     ],
