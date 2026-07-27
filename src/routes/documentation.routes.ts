@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { Router, Request, Response } from 'express';
 
 const router = Router();
@@ -8,13 +9,30 @@ router.get('/', (req: Request, res: Response) => {
   const baseUrl = `${protocol}://${host}`;
   const swaggerUrl = `${baseUrl}/api/swagger.json`;
 
+  // This page needs to load the Redoc CDN bundle and run its own inline
+  // script. Rather than weakening the app-wide CSP with 'unsafe-inline',
+  // scope a nonce-based policy to just this response.
+  const nonce = crypto.randomBytes(16).toString('base64');
+  res.setHeader(
+    'Content-Security-Policy',
+    [
+      "default-src 'self'",
+      `script-src 'self' 'nonce-${nonce}' https://cdn.jsdelivr.net`,
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
+      "font-src 'self' https://fonts.gstatic.com data:",
+      "img-src 'self' data:",
+      "connect-src 'self'",
+      "worker-src 'self' blob:",
+    ].join('; ')
+  );
+
   res.send(`<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Saree eCommerce API Documentation</title>
-  <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"></script>
+  <script nonce="${nonce}" src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
@@ -262,7 +280,7 @@ router.get('/', (req: Request, res: Response) => {
     </main>
   </div>
 
-  <script>
+  <script nonce="${nonce}">
     function methodClass(method) {
       switch (method.toLowerCase()) {
         case 'get': return 'method-get';
