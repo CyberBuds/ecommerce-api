@@ -5,8 +5,12 @@ const router = Router();
 
 router.get('/', (req: Request, res: Response) => {
   const host = req.get('host') || 'localhost:4000';
-  const protocol = req.protocol;
-  const baseUrl = `${protocol}://${host}`;
+
+const protocol =
+  req.get('x-forwarded-proto') ||
+  req.protocol;
+
+const baseUrl = `${protocol}://${host}`;
   const swaggerUrl = `${baseUrl}/api/swagger.json`;
 
   // This page needs to load the Redoc CDN bundle and run its own inline

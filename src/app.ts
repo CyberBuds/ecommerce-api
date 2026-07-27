@@ -15,7 +15,7 @@ import config from './config/env';
 import { swaggerSpec } from './config/swagger';
 
 const app = express();
-
+app.set('trust proxy', 1);
 // Assign a request id for traceability
 app.use((req, _res, next) => {
   (req as any).id = uuidv4();
