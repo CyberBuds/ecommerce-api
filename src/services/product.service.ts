@@ -136,7 +136,7 @@ export default class ProductService {
     const payload = this.buildPayload(dto, createdBy) as unknown as CreateProductDto;
     await this.assertUnique(payload);
 
-    const { variants, images, attributes, tags, categories, relations, ...productData } = payload;
+    const { variants, images, attributes, tags, categories: _categories, relations: _relations, ...productData } = payload;
     const product = await this.repository.create(productData as Record<string, unknown>);
 
     if (variants && variants.length > 0) {
@@ -155,14 +155,6 @@ export default class ProductService {
       await Promise.all(tags.map((tag) => this.repository.createProductTag(product.id, String(tag))));
     }
 
-    if (categories && categories.length > 0) {
-      await Promise.all(categories.map((categoryId) => this.repository.createProductCategory(product.id, Number(categoryId))));
-    }
-
-    if (relations && relations.length > 0) {
-      await this.repository.createRelations(product.id, relations.map(toRecord));
-    }
-
     await this.repository.recordAudit(product.id, 'CREATE_PRODUCT', createdBy ?? null, { productCode: product.productCode }, null);
     return this.repository.findById(product.id);
   }
@@ -176,7 +168,7 @@ export default class ProductService {
     const payload = this.buildPayload(dto, undefined, updatedBy) as unknown as UpdateProductDto;
     await this.assertUnique(payload, id);
 
-    const { variants, images, attributes, tags, categories, relations, ...productData } = payload;
+    const { variants, images, attributes, tags, categories: _categories, relations: _relations, ...productData } = payload;
     const updated = await this.repository.update(id, productData as Record<string, unknown>);
 
     if (variants) {
@@ -199,18 +191,9 @@ export default class ProductService {
       await Promise.all(tags.map((tag) => this.repository.createProductTag(id, String(tag))));
     }
 
-    if (categories) {
-      await this.repository.deleteProductCategories(id);
-      await Promise.all(categories.map((categoryId) => this.repository.createProductCategory(id, Number(categoryId))));
-    }
-
     if (attributes) {
       await this.repository.deleteAttributes(id);
       await this.repository.createAttributes(id, this.normalizeAttributes(attributes));
-    }
-
-    if (relations) {
-      await this.repository.createRelations(id, relations.map(toRecord));
     }
 
     await this.repository.recordAudit(id, 'UPDATE_PRODUCT', updatedBy ?? null, { updates: productData }, existing as any);
@@ -314,7 +297,7 @@ export default class ProductService {
     }
 
     const copySlug = slugify(`${source.slug}-copy`);
-    const { variants, images, attributes, tags, categories, relations, auditLogs, ...productData } = source as any;
+    const { variants, images, attributes, tags, categories: _categories, relations: _relations, auditLogs: _auditLogs, ...productData } = source as any;
     const duplicateProduct = await this.repository.create({
       ...productData,
       sku: `${source.sku}-copy`,
@@ -344,10 +327,6 @@ export default class ProductService {
       this.repository.createAttributes(duplicateProduct.id, [{ attributeKey: attribute.attributeKey, attributeValue: attribute.attributeValue }])
     ));
     await Promise.all(source.tags.map((tag: any) => this.repository.createProductTag(duplicateProduct.id, tag.name)));
-    await Promise.all(source.categories.map((category: any) =>
-      this.repository.createProductCategory(duplicateProduct.id, category.categoryId)
-    ));
-
     await this.repository.recordAudit(productId, 'DUPLICATE_PRODUCT', null, { duplicatedId: duplicateProduct.id }, source as any);
     return this.repository.findById(duplicateProduct.id);
   }

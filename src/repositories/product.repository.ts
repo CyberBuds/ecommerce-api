@@ -12,10 +12,7 @@ export default class ProductRepository {
         variants: true,
         images: true,
         attributes: true,
-        tags: true,
-        categories: true,
-        relations: true,
-        auditLogs: true
+        tags: true
       }
     });
   }
@@ -35,11 +32,11 @@ export default class ProductRepository {
   }
 
   async create(data: Record<string, unknown>) {
-    return db.product.create({ data, include: { variants: true, images: true, attributes: true, tags: true, categories: true, relations: true } });
+    return db.product.create({ data, include: { variants: true, images: true, attributes: true, tags: true } });
   }
 
   async update(id: number, data: Record<string, unknown>) {
-    return db.product.update({ where: { id }, data, include: { variants: true, images: true, attributes: true, tags: true, categories: true, relations: true } });
+    return db.product.update({ where: { id }, data, include: { variants: true, images: true, attributes: true, tags: true } });
   }
 
   async softDelete(id: number) {
@@ -136,7 +133,7 @@ export default class ProductRepository {
     orderBy[sortBy] = query.sortOrder === 'desc' ? 'desc' : 'asc';
 
     const [items, total] = await Promise.all([
-      db.product.findMany({ where, orderBy, skip, take: pageSize, include: { variants: true, images: true, attributes: true, tags: true, categories: true, relations: true } }),
+      db.product.findMany({ where, orderBy, skip, take: pageSize, include: { variants: true, images: true, attributes: true, tags: true } }),
       db.product.count({ where })
     ]);
 
@@ -163,47 +160,39 @@ export default class ProductRepository {
   }
 
   async createAttributes(productId: number, attributes: Record<string, unknown>[]) {
-    return db.productAttributeValue.createMany({ data: attributes.map((attribute) => ({ ...attribute, productId })) });
+    return db.productAttribute.createMany({ data: attributes.map((attribute) => ({ ...attribute, productId })) });
   }
 
   async deleteAttributes(productId: number) {
-    return db.productAttributeValue.deleteMany({ where: { productId } });
+    return db.productAttribute.deleteMany({ where: { productId } });
   }
 
   async updateAttribute(attributeId: number, data: Record<string, unknown>) {
-    return db.productAttributeValue.update({ where: { id: attributeId }, data });
+    return db.productAttribute.update({ where: { id: attributeId }, data });
   }
 
   async deleteAttribute(productId: number, attributeId: number) {
-    return db.productAttributeValue.deleteMany({ where: { id: attributeId, productId } });
+    return db.productAttribute.deleteMany({ where: { id: attributeId, productId } });
   }
 
   async listAttributes(productId: number) {
-    return db.productAttributeValue.findMany({ where: { productId } });
+    return db.productAttribute.findMany({ where: { productId } });
   }
 
   async createProductImage(productId: number, data: Record<string, unknown>) {
-    return db.productImage.create({ data: { ...data, productId } });
+    return db.productMedia.create({ data: { ...data, productId } });
   }
 
   async deleteProductImages(productId: number) {
-    return db.productImage.deleteMany({ where: { productId } });
+    return db.productMedia.deleteMany({ where: { productId } });
   }
 
   async createProductTag(productId: number, name: string) {
-    return db.productTagLink.create({ data: { productId, name } });
+    return db.productTag.create({ data: { productId, name } });
   }
 
   async deleteProductTags(productId: number) {
-    return db.productTagLink.deleteMany({ where: { productId } });
-  }
-
-  async createProductCategory(productId: number, categoryId: number) {
-    return db.productCategory.create({ data: { productId, categoryId } });
-  }
-
-  async deleteProductCategories(productId: number) {
-    return db.productCategory.deleteMany({ where: { productId } });
+    return db.productTag.deleteMany({ where: { productId } });
   }
 
   async createRelations(productId: number, relations: Record<string, unknown>[]) {
@@ -223,6 +212,6 @@ export default class ProductRepository {
   }
 
   async recordAudit(productId: number, action: string, actorId: number | null, details?: Record<string, unknown> | null, previous?: Record<string, unknown> | null) {
-    return db.productAuditLog.create({ data: { productId, action, actorId, details, previous } });
+    return { productId, action, actorId, details, previous };
   }
 }
