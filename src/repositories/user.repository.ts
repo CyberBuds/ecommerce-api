@@ -12,19 +12,33 @@ export interface UserListQuery {
 
 export default class UserRepository {
   async findByEmail(email: string): Promise<User | null> {
-    return prisma.user.findUnique({ where: { email } });
+    return prisma.user.findUnique({
+      where: { email },
+      include: {
+        role: {
+          include: {
+            permissions: true,
+          },
+        },
+      },
+    });
   }
 
   async findByMobile(mobile: string): Promise<User | null> {
-    return prisma.user.findUnique({ where: { mobile } });
+    return prisma.user.findUnique({
+      where: { mobile },
+      include: {
+        role: {
+          include: {
+            permissions: true,
+          },
+        },
+      },
+    });
   }
 
   async findById(id: number): Promise<User | null> {
-    return prisma.user.findUnique({ where: { id } });
-  }
-
-  async create(data: Partial<User>): Promise<User> {
-    return prisma.user.create({ data: data as any });
+    return prisma.user.findUnique({ where: { id }, include: { role: { include: { permissions: true } } } });
   }
 
   async update(id: number, data: Partial<User>): Promise<User> {
@@ -63,7 +77,7 @@ export default class UserRepository {
     }
 
     const [items, total] = await Promise.all([
-      prisma.user.findMany({ where, orderBy, skip, take: pageSize }),
+      prisma.user.findMany({ where, orderBy, skip, take: pageSize, include: { role: true } }),
       prisma.user.count({ where })
     ]);
 
@@ -71,7 +85,11 @@ export default class UserRepository {
   }
 
   async assignRole(userId: number, roleId: number): Promise<User> {
-    return prisma.user.update({ where: { id: userId }, data: { roleId } });
+    return prisma.user.update({
+      where: { id: userId },
+      data: { roleId },
+      include: { role: { include: { permissions: true } } },
+    });
   }
 
   async setLock(userId: number, locked: boolean): Promise<User> {
