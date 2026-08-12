@@ -52,6 +52,12 @@ app.get('/api/swagger.json', (_req, res) => {
 // API docs landing page
 app.use('/documentation', documentationRoutes);
 
+// Render and other hosting platforms probe the service root. Keep this small
+// health response separate from the versioned API health endpoint.
+app.get('/', (_req, res) => {
+  return res.status(200).json({ success: true, data: { status: 'ok' }, meta: null, message: 'Ecommerce API is running', errors: null });
+});
+
 // Mount API routes under /api
 app.use('/api', routes);
 
