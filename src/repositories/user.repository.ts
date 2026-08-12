@@ -41,6 +41,10 @@ export default class UserRepository {
     return prisma.user.findUnique({ where: { id }, include: { role: { include: { permissions: true } } } });
   }
 
+  async create(data: Partial<User>): Promise<User> {
+    return prisma.user.create({ data: data as any });
+  }
+
   async update(id: number, data: Partial<User>): Promise<User> {
     return prisma.user.update({ where: { id }, data: data as any });
   }
