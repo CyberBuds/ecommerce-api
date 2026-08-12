@@ -68,7 +68,7 @@ model RolePermission {
 
   @@unique([roleId, permissionId])
 
-  @@map("role_permission")
+  @@map("rolepermission")
 }
 
 model User {
