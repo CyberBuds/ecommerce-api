@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  
 }
 
 datasource db {
@@ -35,27 +34,26 @@ enum MasterStatus {
 }
 
 model Role {
-  id          Int               @id @default(autoincrement())
-  name        String            @unique
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
   description String?
   permissions RolePermission[]
   users       User[]
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   @@map("role")
 }
 
 model Permission {
-  id          Int               @id @default(autoincrement())
-  resource    String
-  action      PermissionAction
-  roles       RolePermission[]
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id        Int              @id @default(autoincrement())
+  resource  String
+  action    PermissionAction
+  roles     RolePermission[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
 
   @@unique([resource, action])
-
   @@map("permission")
 }
 
@@ -67,7 +65,6 @@ model RolePermission {
   permissionId Int
 
   @@unique([roleId, permissionId])
-
   @@map("rolepermission")
 }
 
@@ -94,7 +91,7 @@ model User {
   createdBy     Int?
   updatedBy     Int?
 
-    @@map("user")
+  @@map("user")
 }
 
 model RefreshToken {
@@ -107,7 +104,7 @@ model RefreshToken {
   createdAt DateTime @default(now())
 
   @@index([token])
-    @@map("refreshtoken")
+  @@map("refreshtoken")
 }
 
 enum CustomerStatus {
@@ -166,110 +163,114 @@ enum CustomerReviewStatus {
 }
 
 model CustomerGroup {
-  id           Int          @id @default(autoincrement())
-  name         String       @unique
-  code         String       @unique
-  description  String?
-  status       MasterStatus @default(ACTIVE)
-  isActive     Boolean      @default(true)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  createdBy    Int?
-  updatedBy    Int?
-  customers    Customer[]
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  code        String       @unique
+  description String?
+  status      MasterStatus @default(ACTIVE)
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  createdBy   Int?
+  updatedBy   Int?
+  customers   Customer[]
 }
 
 model Customer {
-  id                Int                       @id @default(autoincrement())
-  customerCode      String                    @unique
-  firstName         String
-  lastName          String
-  email             String                    @unique
-  mobile            String?                   @unique
-  gender            Gender?
-  dateOfBirth       DateTime?
-  anniversaryDate   DateTime?
-  profileImage      String?
-  referralCode      String?                   @unique
-  referredBy        Customer?                 @relation("CustomerReferrals", fields: [referredById], references: [id])
-  referredById      Int?
-  referredCustomers Customer[]               @relation("CustomerReferrals")
-  walletBalance     Decimal                   @default(0)
-  loyaltyPoints     Int                       @default(0)
-  status            CustomerStatus            @default(ACTIVE)
-  isEmailVerified   Boolean                   @default(false)
-  isMobileVerified  Boolean                   @default(false)
-  lastLogin         DateTime?
-  customerGroup     CustomerGroup?            @relation(fields: [customerGroupId], references: [id])
-  customerGroupId   Int?
-  addresses         CustomerAddress[]
-  wishlist          CustomerWishlist[]
-  reviews           CustomerReview[]
-  walletTransactions CustomerWalletTransaction[]
+  id                      Int                         @id @default(autoincrement())
+  customerCode            String                      @unique
+  firstName               String
+  lastName                String
+  email                   String                      @unique
+  mobile                  String?                     @unique
+  gender                  Gender?
+  dateOfBirth             DateTime?
+  anniversaryDate         DateTime?
+  profileImage            String?
+  referralCode            String?                     @unique
+  referredBy              Customer?                   @relation("CustomerReferrals", fields: [referredById], references: [id])
+  referredById            Int?
+  referredCustomers       Customer[]                  @relation("CustomerReferrals")
+  walletBalance           Decimal                     @default(0)
+  loyaltyPoints           Int                         @default(0)
+  status                  CustomerStatus              @default(ACTIVE)
+  isEmailVerified         Boolean                     @default(false)
+  isMobileVerified        Boolean                     @default(false)
+  lastLogin               DateTime?
+  customerGroup           CustomerGroup?              @relation(fields: [customerGroupId], references: [id])
+  customerGroupId         Int?
+  addresses               CustomerAddress[]
+  wishlist                CustomerWishlist[]
+  reviews                 CustomerReview[]
+  walletTransactions      CustomerWalletTransaction[]
   storeCreditTransactions StoreCreditTransaction[]
-  loyaltyTransactions LoyaltyTransaction[]
-  notifications     CustomerNotification[]
-  activityLogs      CustomerActivityLog[]
-  notes             CustomerNote[]
-  documents         CustomerDocument[]
-  savedCarts        SavedCart[]
-  carts             Cart[]
-  orders            Order[]
-  payments          Payment[]
-  couponUsages      CouponUsage[]
+  loyaltyTransactions     LoyaltyTransaction[]
+  notifications           CustomerNotification[]
+  activityLogs            CustomerActivityLog[]
+  notes                   CustomerNote[]
+  documents               CustomerDocument[]
+  savedCarts              SavedCart[]
+  carts                   Cart[]
+  orders                  Order[]
+  payments                Payment[]
+  couponUsages            CouponUsage[]
   abandonedCartRecoveries AbandonedCartRecovery[]
-  creditNotes       CreditNote[]
-  debitNotes        DebitNote[]
-  createdAt         DateTime                  @default(now())
-  updatedAt         DateTime                  @updatedAt
-  createdBy         Int?
-  updatedBy         Int?
+  creditNotes             CreditNote[]
+  debitNotes              DebitNote[]
+  createdAt               DateTime                    @default(now())
+  updatedAt               DateTime                    @updatedAt
+  createdBy               Int?
+  updatedBy               Int?
+
+  @@map("customer")
 }
 
 model CustomerAddress {
-  id               Int                 @id @default(autoincrement())
-  customer         Customer            @relation(fields: [customerId], references: [id])
-  customerId       Int
-  addressType      CustomerAddressType
-  isDefaultBilling Boolean             @default(false)
-  isDefaultShipping Boolean            @default(false)
-  addressLine1     String
-  addressLine2     String?
-  city             String
-  state            String
-  country          String
-  pincode          String
-  latitude         Float?
-  longitude        Float?
-  status           MasterStatus        @default(ACTIVE)
-  billingOrders    Order[]             @relation("OrderBillingAddress")
-  shippingOrders   Order[]             @relation("OrderShippingAddress")
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
-  createdBy        Int?
-  updatedBy        Int?
+  id                Int                 @id @default(autoincrement())
+  customer          Customer            @relation(fields: [customerId], references: [id])
+  customerId        Int
+  addressType       CustomerAddressType
+  isDefaultBilling  Boolean             @default(false)
+  isDefaultShipping Boolean             @default(false)
+  addressLine1      String
+  addressLine2      String?
+  city              String
+  state             String
+  country           String
+  pincode           String
+  latitude          Float?
+  longitude         Float?
+  status            MasterStatus        @default(ACTIVE)
+  billingOrders     Order[]             @relation("OrderBillingAddress")
+  shippingOrders    Order[]             @relation("OrderShippingAddress")
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  createdBy         Int?
+  updatedBy         Int?
+
+  @@map("customeraddress")
 }
 
 model CustomerWishlist {
-  id         Int            @id @default(autoincrement())
-  customer   Customer       @relation(fields: [customerId], references: [id])
+  id         Int             @id @default(autoincrement())
+  customer   Customer        @relation(fields: [customerId], references: [id])
   customerId Int
-  product    Product        @relation(fields: [productId], references: [id])
+  product    Product         @relation(fields: [productId], references: [id])
   productId  Int
   variant    ProductVariant? @relation(fields: [variantId], references: [id])
   variantId  Int?
-  addedAt    DateTime       @default(now())
+  addedAt    DateTime        @default(now())
 
   @@unique([customerId, productId, variantId])
 }
 
 model CustomerReview {
-  id           Int                 @id @default(autoincrement())
-  customer     Customer            @relation(fields: [customerId], references: [id])
+  id           Int                  @id @default(autoincrement())
+  customer     Customer             @relation(fields: [customerId], references: [id])
   customerId   Int
-  product      Product             @relation(fields: [productId], references: [id])
+  product      Product              @relation(fields: [productId], references: [id])
   productId    Int
-  variant      ProductVariant?     @relation(fields: [variantId], references: [id])
+  variant      ProductVariant?      @relation(fields: [variantId], references: [id])
   variantId    Int?
   rating       Int
   reviewTitle  String
@@ -278,46 +279,46 @@ model CustomerReview {
   status       CustomerReviewStatus @default(PENDING)
   approvedBy   Int?
   approvedDate DateTime?
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
 }
 
 model CustomerWalletTransaction {
-  id            Int                   @id @default(autoincrement())
-  customer      Customer              @relation(fields: [customerId], references: [id])
-  customerId    Int
-  type          WalletTransactionType
-  amount        Decimal
-  reference     String?
-  remarks       String?
-  balanceAfter  Decimal
-  createdAt     DateTime              @default(now())
+  id           Int                   @id @default(autoincrement())
+  customer     Customer              @relation(fields: [customerId], references: [id])
+  customerId   Int
+  type         WalletTransactionType
+  amount       Decimal
+  reference    String?
+  remarks      String?
+  balanceAfter Decimal
+  createdAt    DateTime              @default(now())
 }
 
 model LoyaltyTransaction {
-  id            Int                   @id @default(autoincrement())
-  customer      Customer              @relation(fields: [customerId], references: [id])
-  customerId    Int
-  type          LoyaltyTransactionType
-  points        Int
-  reference     String?
-  remarks       String?
-  balanceAfter  Int
-  createdAt     DateTime              @default(now())
+  id           Int                    @id @default(autoincrement())
+  customer     Customer               @relation(fields: [customerId], references: [id])
+  customerId   Int
+  type         LoyaltyTransactionType
+  points       Int
+  reference    String?
+  remarks      String?
+  balanceAfter Int
+  createdAt    DateTime               @default(now())
 }
 
 model CustomerNotification {
-  id          Int                 @id @default(autoincrement())
-  customer    Customer            @relation(fields: [customerId], references: [id])
-  customerId  Int
-  channel     NotificationChannel
-  title       String
-  message     String
-  status      NotificationStatus @default(PENDING)
-  isRead      Boolean             @default(false)
-  sentAt      DateTime?
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  id         Int                 @id @default(autoincrement())
+  customer   Customer            @relation(fields: [customerId], references: [id])
+  customerId Int
+  channel    NotificationChannel
+  title      String
+  message    String
+  status     NotificationStatus  @default(PENDING)
+  isRead     Boolean             @default(false)
+  sentAt     DateTime?
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
 }
 
 model CustomerActivityLog {
@@ -331,27 +332,27 @@ model CustomerActivityLog {
 }
 
 model CustomerNote {
-  id          Int        @id @default(autoincrement())
-  customer    Customer   @relation(fields: [customerId], references: [id])
-  customerId  Int
-  note        String
-  createdBy   Int?
-  updatedBy   Int?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id         Int      @id @default(autoincrement())
+  customer   Customer @relation(fields: [customerId], references: [id])
+  customerId Int
+  note       String
+  createdBy  Int?
+  updatedBy  Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model CustomerDocument {
-  id           Int        @id @default(autoincrement())
-  customer     Customer   @relation(fields: [customerId], references: [id])
+  id           Int          @id @default(autoincrement())
+  customer     Customer     @relation(fields: [customerId], references: [id])
   customerId   Int
   fileName     String
   fileUrl      String
   documentType String?
   status       MasterStatus @default(ACTIVE)
   uploadedBy   Int?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 }
 
 enum CartStatus {
@@ -368,72 +369,76 @@ enum CouponType {
 }
 
 model Cart {
-  id               Int             @id @default(autoincrement())
-  customer         Customer?       @relation(fields: [customerId], references: [id])
-  customerId       Int?
-  sessionId        String?         @unique
-  items            CartItem[]
-  coupon           Coupon?         @relation(fields: [couponId], references: [id])
-  couponId         Int?
-  shippingMethod   ShippingMethod? @relation(fields: [shippingMethodId], references: [id])
-  shippingMethodId Int?
-  deliverySlot     DeliverySlot?   @relation(fields: [deliverySlotId], references: [id])
-  deliverySlotId   Int?
-  savedCart       SavedCart?
+  id                    Int                    @id @default(autoincrement())
+  customer              Customer?              @relation(fields: [customerId], references: [id])
+  customerId            Int?
+  sessionId             String?                @unique
+  items                 CartItem[]
+  coupon                Coupon?                @relation(fields: [couponId], references: [id])
+  couponId              Int?
+  shippingMethod        ShippingMethod?        @relation(fields: [shippingMethodId], references: [id])
+  shippingMethodId      Int?
+  deliverySlot          DeliverySlot?          @relation(fields: [deliverySlotId], references: [id])
+  deliverySlotId        Int?
+  savedCart             SavedCart?
   abandonedCartRecovery AbandonedCartRecovery?
-  subtotal         Decimal         @default(0)
-  discountAmount   Decimal         @default(0)
-  couponDiscount   Decimal         @default(0)
-  shippingCharge   Decimal         @default(0)
-  taxAmount        Decimal         @default(0)
-  totalAmount      Decimal         @default(0)
-  status           CartStatus      @default(ACTIVE)
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-  createdBy        Int?
-  updatedBy        Int?
+  subtotal              Decimal                @default(0)
+  discountAmount        Decimal                @default(0)
+  couponDiscount        Decimal                @default(0)
+  shippingCharge        Decimal                @default(0)
+  taxAmount             Decimal                @default(0)
+  totalAmount           Decimal                @default(0)
+  status                CartStatus             @default(ACTIVE)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  createdBy             Int?
+  updatedBy             Int?
+
+  @@map("cart")
 }
 
 model CartItem {
-  id         Int            @id @default(autoincrement())
-  cart       Cart           @relation(fields: [cartId], references: [id])
-  cartId     Int
-  product    Product        @relation(fields: [productId], references: [id])
-  productId  Int
-  variant    ProductVariant? @relation(fields: [variantId], references: [id])
-  variantId  Int?
-  quantity   Int             @default(1)
-  unitPrice  Decimal
-  discount   Decimal         @default(0)
-  tax        Decimal         @default(0)
-  total      Decimal
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
+  id        Int             @id @default(autoincrement())
+  cart      Cart            @relation(fields: [cartId], references: [id])
+  cartId    Int
+  product   Product         @relation(fields: [productId], references: [id])
+  productId Int
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+  variantId Int?
+  quantity  Int             @default(1)
+  unitPrice Decimal
+  discount  Decimal         @default(0)
+  tax       Decimal         @default(0)
+  total     Decimal
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
 }
 
 model Coupon {
-  id                         Int          @id @default(autoincrement())
-  couponCode                 String       @unique
-  title                      String
-  description                String?
-  couponType                 CouponType   @default(FLAT)
-  percentage                 Int?         
-  flatAmount                 Decimal?     
-  maximumDiscount            Decimal?     
-  minimumOrderAmount         Decimal?     
-  usageLimit                 Int?         
-  usagePerCustomer           Int?         
-  startDate                  DateTime
-  endDate                    DateTime
-  applicableCategories       Json?
-  applicableProducts         Json?
-  applicableCustomerGroups   Json?
-  status                     MasterStatus @default(ACTIVE)
-  createdAt                  DateTime      @default(now())
-  updatedAt                  DateTime      @updatedAt
-  usages                     CouponUsage[]
-  carts                      Cart[]
-  orders                     Order[]
+  id                       Int           @id @default(autoincrement())
+  couponCode               String        @unique
+  title                    String
+  description              String?
+  couponType               CouponType    @default(FLAT)
+  percentage               Int?
+  flatAmount               Decimal?
+  maximumDiscount          Decimal?
+  minimumOrderAmount       Decimal?
+  usageLimit               Int?
+  usagePerCustomer         Int?
+  startDate                DateTime
+  endDate                  DateTime
+  applicableCategories     Json?
+  applicableProducts       Json?
+  applicableCustomerGroups Json?
+  status                   MasterStatus  @default(ACTIVE)
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
+  usages                   CouponUsage[]
+  carts                    Cart[]
+  orders                   Order[]
+
+  @@map("coupon")
 }
 
 model CouponUsage {
@@ -551,8 +556,8 @@ enum StoreCreditType {
 }
 
 model Banner {
-  id            Int            @id @default(autoincrement())
-  bannerCode    String         @unique
+  id            Int             @id @default(autoincrement())
+  bannerCode    String          @unique
   title         String
   subtitle      String?
   description   String?
@@ -560,122 +565,138 @@ model Banner {
   mobileImageId Int?
   buttonText    String?
   buttonUrl     String?
-  position      BannerPosition @default(TOP)
-  priority      Int            @default(0)
+  position      BannerPosition  @default(TOP)
+  priority      Int             @default(0)
   startDate     DateTime?
   endDate       DateTime?
   displayOn     BannerDisplayOn @default(HOME)
-  status        CampaignStatus @default(ACTIVE)
+  status        CampaignStatus  @default(ACTIVE)
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+
+  @@map("banner")
 }
 
 model HomepageSection {
-  id          Int                 @id @default(autoincrement())
+  id          Int                  @id @default(autoincrement())
   sectionType MarketingSectionType
   title       String
   description String?
   metadata    Json?
-  priority    Int                 @default(0)
-  status      CampaignStatus      @default(ACTIVE)
+  priority    Int                  @default(0)
+  status      CampaignStatus       @default(ACTIVE)
   startDate   DateTime?
   endDate     DateTime?
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  @@map("homepagesection")
 }
 
 model Campaign {
-  id               Int                      @id @default(autoincrement())
-  campaignCode     String                   @unique
+  id               Int                        @id @default(autoincrement())
+  campaignCode     String                     @unique
   campaignName     String
   campaignType     CampaignType
   description      String?
   startDate        DateTime
   endDate          DateTime
-  budget           Decimal                  @default(0)
-  priority         Int                      @default(0)
-  status           CampaignStatus           @default(DRAFT)
+  budget           Decimal                    @default(0)
+  priority         Int                        @default(0)
+  status           CampaignStatus             @default(DRAFT)
   flashSales       FlashSale[]
   deals            DealOfTheDay[]
   comboOffers      ComboOffer[]
   buyXGetYOffers   BuyXGetYOffer[]
   channelCampaigns MarketingChannelCampaign[]
   analytics        CampaignAnalytics[]
-  createdAt        DateTime                 @default(now())
-  updatedAt        DateTime                 @updatedAt
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
+
+  @@map("campaign")
 }
 
 model FlashSale {
-  id                        Int            @id @default(autoincrement())
-  campaign                  Campaign?      @relation(fields: [campaignId], references: [id])
-  campaignId                Int?
-  flashSaleName             String
-  startDate                 DateTime
-  endDate                   DateTime
-  products                  Json?
-  discountType              PromotionDiscountType
-  discountValue             Decimal
-  maximumDiscount           Decimal?       @default(0)
-  maximumQuantityPerCustomer Int?          @default(0)
-  status                    CampaignStatus @default(ACTIVE)
-  createdAt                 DateTime       @default(now())
-  updatedAt                 DateTime       @updatedAt
+  id                         Int                   @id @default(autoincrement())
+  campaign                   Campaign?             @relation(fields: [campaignId], references: [id])
+  campaignId                 Int?
+  flashSaleName              String
+  startDate                  DateTime
+  endDate                    DateTime
+  products                   Json?
+  discountType               PromotionDiscountType
+  discountValue              Decimal
+  maximumDiscount            Decimal?              @default(0)
+  maximumQuantityPerCustomer Int?                  @default(0)
+  status                     CampaignStatus        @default(ACTIVE)
+  createdAt                  DateTime              @default(now())
+  updatedAt                  DateTime              @updatedAt
+
+  @@map("flashsale")
 }
 
 model DealOfTheDay {
-  id          Int            @id @default(autoincrement())
-  campaign    Campaign?      @relation(fields: [campaignId], references: [id])
-  campaignId  Int?
-  product     Product        @relation(fields: [productId], references: [id])
-  productId   Int
-  variant     ProductVariant? @relation(fields: [variantId], references: [id])
-  variantId   Int?
-  startDate   DateTime
-  endDate     DateTime
-  offerPrice  Decimal
-  status      CampaignStatus @default(ACTIVE)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  id         Int             @id @default(autoincrement())
+  campaign   Campaign?       @relation(fields: [campaignId], references: [id])
+  campaignId Int?
+  product    Product         @relation(fields: [productId], references: [id])
+  productId  Int
+  variant    ProductVariant? @relation(fields: [variantId], references: [id])
+  variantId  Int?
+  startDate  DateTime
+  endDate    DateTime
+  offerPrice Decimal
+  status     CampaignStatus  @default(ACTIVE)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@map("dealoftheday")
 }
 
 model ComboOffer {
+  id          Int            @id @default(autoincrement())
+  campaign    Campaign?      @relation(fields: [campaignId], references: [id])
+  campaignId  Int?
+  offerName   String
+  productIds  Json?
+  bundlePrice Decimal
+  discount    Decimal        @default(0)
+  status      CampaignStatus @default(ACTIVE)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("combooffer")
+}
+
+model BuyXGetYOffer {
   id           Int            @id @default(autoincrement())
   campaign     Campaign?      @relation(fields: [campaignId], references: [id])
   campaignId   Int?
-  offerName    String
-  productIds   Json?
-  bundlePrice  Decimal
+  buyProductId Int
+  buyVariantId Int?
+  buyQuantity  Int            @default(1)
+  getProductId Int
+  getVariantId Int?
+  getQuantity  Int            @default(1)
   discount     Decimal        @default(0)
   status       CampaignStatus @default(ACTIVE)
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
-}
 
-model BuyXGetYOffer {
-  id            Int            @id @default(autoincrement())
-  campaign      Campaign?      @relation(fields: [campaignId], references: [id])
-  campaignId    Int?
-  buyProductId  Int
-  buyVariantId  Int?
-  buyQuantity   Int            @default(1)
-  getProductId  Int
-  getVariantId  Int?
-  getQuantity   Int            @default(1)
-  discount      Decimal        @default(0)
-  status        CampaignStatus @default(ACTIVE)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  @@map("buyxgetyoffer")
 }
 
 model GiftCard {
-  id            Int             @id @default(autoincrement())
-  giftCardCode  String          @unique
-  amount        Decimal
-  balance       Decimal         @default(0)
-  expiryDate    DateTime
-  status        GiftCardStatus  @default(ACTIVE)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id           Int            @id @default(autoincrement())
+  giftCardCode String         @unique
+  amount       Decimal
+  balance      Decimal        @default(0)
+  expiryDate   DateTime
+  status       GiftCardStatus @default(ACTIVE)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@map("giftcard")
 }
 
 model ReferralProgram {
@@ -688,79 +709,91 @@ model ReferralProgram {
   status         ReferralStatus @default(ACTIVE)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+
+  @@map("referralprogram")
 }
 
 model StoreCreditTransaction {
-  id           Int              @id @default(autoincrement())
-  customer     Customer         @relation(fields: [customerId], references: [id])
+  id           Int             @id @default(autoincrement())
+  customer     Customer        @relation(fields: [customerId], references: [id])
   customerId   Int
   type         StoreCreditType
-  creditAmount Decimal          @default(0)
-  debitAmount  Decimal          @default(0)
-  balance      Decimal          @default(0)
+  creditAmount Decimal         @default(0)
+  debitAmount  Decimal         @default(0)
+  balance      Decimal         @default(0)
   reason       String?
   reference    String?
-  createdAt    DateTime         @default(now())
+  createdAt    DateTime        @default(now())
+
+  @@map("storecredittransaction")
 }
 
 model NewsletterSubscriber {
-  id           Int              @id @default(autoincrement())
-  email        String           @unique
-  status       SubscriberStatus @default(ACTIVE)
-  subscribedAt DateTime         @default(now())
+  id             Int              @id @default(autoincrement())
+  email          String           @unique
+  status         SubscriberStatus @default(ACTIVE)
+  subscribedAt   DateTime         @default(now())
   unsubscribedAt DateTime?
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@map("newslettersubscriber")
 }
 
 model MarketingChannelCampaign {
-  id              Int              @id @default(autoincrement())
-  campaign        Campaign?        @relation(fields: [campaignId], references: [id])
-  campaignId      Int?
-  name            String
-  channel         MarketingChannel
-  subject         String?
-  message         String
-  targetAudience  String?
-  payload         Json?
-  scheduleAt      DateTime?
-  status          CampaignStatus  @default(DRAFT)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  analytics       CampaignAnalytics[]
+  id             Int                 @id @default(autoincrement())
+  campaign       Campaign?           @relation(fields: [campaignId], references: [id])
+  campaignId     Int?
+  name           String
+  channel        MarketingChannel
+  subject        String?
+  message        String
+  targetAudience String?
+  payload        Json?
+  scheduleAt     DateTime?
+  status         CampaignStatus      @default(DRAFT)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  analytics      CampaignAnalytics[]
+
+  @@map("marketingchannelcampaign")
 }
 
 model LandingPage {
-  id           Int            @id @default(autoincrement())
-  slug         String         @unique
-  seoTitle     String
+  id             Int            @id @default(autoincrement())
+  slug           String         @unique
+  seoTitle       String
   seoDescription String?
-  metaKeywords String?
-  canonicalUrl String?
-  bannerId     Int?
-  sections     Json?
-  status       CampaignStatus @default(ACTIVE)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  metaKeywords   String?
+  canonicalUrl   String?
+  bannerId       Int?
+  sections       Json?
+  status         CampaignStatus @default(ACTIVE)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@map("landingpage")
 }
 
 model AnnouncementBar {
-  id          Int          @id @default(autoincrement())
+  id          Int            @id @default(autoincrement())
   title       String
   message     String
   buttonText  String?
   buttonUrl   String?
   displayRule String?
-  priority    Int          @default(0)
+  priority    Int            @default(0)
   startDate   DateTime?
   endDate     DateTime?
   status      CampaignStatus @default(ACTIVE)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("announcementbar")
 }
 
 model PopupCampaign {
-  id          Int          @id @default(autoincrement())
+  id          Int            @id @default(autoincrement())
   popupType   PopupType
   imageId     Int?
   offerText   String?
@@ -769,22 +802,26 @@ model PopupCampaign {
   startDate   DateTime?
   endDate     DateTime?
   status      CampaignStatus @default(ACTIVE)
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("popupcampaign")
 }
 
 model AbandonedCartRecovery {
-  id              Int                         @id @default(autoincrement())
-  customer        Customer?                   @relation(fields: [customerId], references: [id])
-  customerId      Int?
-  cart            Cart?                       @relation(fields: [cartId], references: [id])
-  cartId          Int?                        @unique
-  reminderCount   Int                         @default(0)
+  id               Int                         @id @default(autoincrement())
+  customer         Customer?                   @relation(fields: [customerId], references: [id])
+  customerId       Int?
+  cart             Cart?                       @relation(fields: [cartId], references: [id])
+  cartId           Int?                        @unique
+  reminderCount    Int                         @default(0)
   lastReminderDate DateTime?
-  nextReminderAt  DateTime?
-  recoveryStatus  AbandonedCartRecoveryStatus @default(PENDING)
-  createdAt       DateTime                    @default(now())
-  updatedAt       DateTime                    @updatedAt
+  nextReminderAt   DateTime?
+  recoveryStatus   AbandonedCartRecoveryStatus @default(PENDING)
+  createdAt        DateTime                    @default(now())
+  updatedAt        DateTime                    @updatedAt
+
+  @@map("abandonedcartrecovery")
 }
 
 model MarketingTag {
@@ -796,64 +833,70 @@ model MarketingTag {
   status      MasterStatus @default(ACTIVE)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+
+  @@map("marketingtag")
 }
 
 model CampaignAnalytics {
-  id                 Int              @id @default(autoincrement())
-  campaign           Campaign?        @relation(fields: [campaignId], references: [id])
-  campaignId         Int?
-  channelCampaign    MarketingChannelCampaign? @relation(fields: [channelCampaignId], references: [id])
-  channelCampaignId  Int?
-  impressions        Int              @default(0)
-  clicks             Int              @default(0)
-  conversions        Int              @default(0)
-  revenue            Decimal          @default(0)
-  ctr                Float            @default(0)
-  conversionRate     Float            @default(0)
-  roi                Float            @default(0)
-  date               DateTime         @default(now())
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
+  id                Int                       @id @default(autoincrement())
+  campaign          Campaign?                 @relation(fields: [campaignId], references: [id])
+  campaignId        Int?
+  channelCampaign   MarketingChannelCampaign? @relation(fields: [channelCampaignId], references: [id])
+  channelCampaignId Int?
+  impressions       Int                       @default(0)
+  clicks            Int                       @default(0)
+  conversions       Int                       @default(0)
+  revenue           Decimal                   @default(0)
+  ctr               Float                     @default(0)
+  conversionRate    Float                     @default(0)
+  roi               Float                     @default(0)
+  date              DateTime                  @default(now())
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+
+  @@map("campaignanalytics")
 }
 
 model ShippingMethod {
-  id          Int          @id @default(autoincrement())
+  id          Int              @id @default(autoincrement())
   name        String
-  code        String       @unique
+  code        String           @unique
   description String?
-  status      MasterStatus @default(ACTIVE)
+  status      MasterStatus     @default(ACTIVE)
   charges     ShippingCharge[]
   carts       Cart[]
   orders      Order[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@map("shippingmethod")
 }
 
 model ShippingZone {
-  id          Int          @id @default(autoincrement())
-  name        String
-  country     String
-  state       String?
-  city        String?
-  postalCode  String?
-  status      MasterStatus @default(ACTIVE)
-  charges     ShippingCharge[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id         Int              @id @default(autoincrement())
+  name       String
+  country    String
+  state      String?
+  city       String?
+  postalCode String?
+  status     MasterStatus     @default(ACTIVE)
+  charges    ShippingCharge[]
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
 }
 
 model ShippingCharge {
-  id              Int             @id @default(autoincrement())
-  shippingMethod  ShippingMethod  @relation(fields: [shippingMethodId], references: [id])
+  id               Int            @id @default(autoincrement())
+  shippingMethod   ShippingMethod @relation(fields: [shippingMethodId], references: [id])
   shippingMethodId Int
-  zone            ShippingZone    @relation(fields: [zoneId], references: [id])
-  zoneId          Int
-  minimumWeight   Float?          @default(0)
-  maximumWeight   Float?          @default(0)
-  charge          Decimal         @default(0)
-  status          MasterStatus    @default(ACTIVE)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  zone             ShippingZone   @relation(fields: [zoneId], references: [id])
+  zoneId           Int
+  minimumWeight    Float?         @default(0)
+  maximumWeight    Float?         @default(0)
+  charge           Decimal        @default(0)
+  status           MasterStatus   @default(ACTIVE)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 }
 
 model DeliverySlot {
@@ -868,18 +911,20 @@ model DeliverySlot {
   orders            Order[]
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
+
+  @@map("deliveryslot")
 }
 
 model SavedCart {
-  id          Int      @id @default(autoincrement())
-  customer    Customer @relation(fields: [customerId], references: [id])
-  customerId  Int
-  cart        Cart     @relation(fields: [cartId], references: [id])
-  cartId      Int      @unique
-  name        String?  
-  status      MasterStatus @default(ACTIVE)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         Int          @id @default(autoincrement())
+  customer   Customer     @relation(fields: [customerId], references: [id])
+  customerId Int
+  cart       Cart         @relation(fields: [cartId], references: [id])
+  cartId     Int          @unique
+  name       String?
+  status     MasterStatus @default(ACTIVE)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 }
 
 enum OrderType {
@@ -1074,35 +1119,35 @@ enum OrderTimelineEventType {
 }
 
 model Order {
-  id                Int                 @id @default(autoincrement())
-  orderNumber       String              @unique
-  customer          Customer?           @relation(fields: [customerId], references: [id])
+  id                Int                  @id @default(autoincrement())
+  orderNumber       String               @unique
+  customer          Customer?            @relation(fields: [customerId], references: [id])
   customerId        Int?
-  billingAddress    CustomerAddress     @relation("OrderBillingAddress", fields: [billingAddressId], references: [id])
+  billingAddress    CustomerAddress      @relation("OrderBillingAddress", fields: [billingAddressId], references: [id])
   billingAddressId  Int
-  shippingAddress   CustomerAddress     @relation("OrderShippingAddress", fields: [shippingAddressId], references: [id])
+  shippingAddress   CustomerAddress      @relation("OrderShippingAddress", fields: [shippingAddressId], references: [id])
   shippingAddressId Int
-  orderDate         DateTime            @default(now())
-  orderType         OrderType           @default(ONLINE)
-  orderSource       OrderSource         @default(WEB)
-  orderStatus       OrderStatus         @default(PENDING)
-  paymentStatus     PaymentStatus       @default(PENDING)
-  fulfillmentStatus FulfillmentStatus   @default(PENDING)
-  shippingMethod    ShippingMethod?     @relation(fields: [shippingMethodId], references: [id])
+  orderDate         DateTime             @default(now())
+  orderType         OrderType            @default(ONLINE)
+  orderSource       OrderSource          @default(WEB)
+  orderStatus       OrderStatus          @default(PENDING)
+  paymentStatus     PaymentStatus        @default(PENDING)
+  fulfillmentStatus FulfillmentStatus    @default(PENDING)
+  shippingMethod    ShippingMethod?      @relation(fields: [shippingMethodId], references: [id])
   shippingMethodId  Int?
-  deliverySlot      DeliverySlot?       @relation(fields: [deliverySlotId], references: [id])
+  deliverySlot      DeliverySlot?        @relation(fields: [deliverySlotId], references: [id])
   deliverySlotId    Int?
-  coupon            Coupon?             @relation(fields: [couponId], references: [id])
+  coupon            Coupon?              @relation(fields: [couponId], references: [id])
   couponId          Int?
-  subtotal          Decimal             @default(0)
-  discountAmount    Decimal             @default(0)
-  couponDiscount    Decimal             @default(0)
-  shippingCharge    Decimal             @default(0)
-  taxAmount         Decimal             @default(0)
-  roundOff          Decimal             @default(0)
-  grandTotal        Decimal             @default(0)
-  currency          String              @default("INR")
-  exchangeRate      Decimal             @default(1)
+  subtotal          Decimal              @default(0)
+  discountAmount    Decimal              @default(0)
+  couponDiscount    Decimal              @default(0)
+  shippingCharge    Decimal              @default(0)
+  taxAmount         Decimal              @default(0)
+  roundOff          Decimal              @default(0)
+  grandTotal        Decimal              @default(0)
+  currency          String               @default("INR")
+  exchangeRate      Decimal              @default(1)
   remarks           String?
   placedBy          Int?
   items             OrderItem[]
@@ -1115,39 +1160,43 @@ model Order {
   refunds           Refund[]
   notes             OrderNote[]
   auditLogs         OrderAuditLog[]
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@map("order")
 }
 
 model OrderItem {
-  id          Int            @id @default(autoincrement())
-  order       Order          @relation(fields: [orderId], references: [id])
-  orderId     Int
-  product     Product        @relation(fields: [productId], references: [id])
-  productId   Int
-  variant     ProductVariant? @relation(fields: [variantId], references: [id])
-  variantId   Int?
-  sku         String
-  productName String
-  variantName String?
-  quantity    Int             @default(1)
-  unitPrice   Decimal
-  discount    Decimal         @default(0)
-  tax         Decimal         @default(0)
-  netAmount   Decimal
-  costPrice   Decimal         @default(0)
-  profit      Decimal         @default(0)
-  status      OrderItemStatus @default(ACTIVE)
+  id            Int             @id @default(autoincrement())
+  order         Order           @relation(fields: [orderId], references: [id])
+  orderId       Int
+  product       Product         @relation(fields: [productId], references: [id])
+  productId     Int
+  variant       ProductVariant? @relation(fields: [variantId], references: [id])
+  variantId     Int?
+  sku           String
+  productName   String
+  variantName   String?
+  quantity      Int             @default(1)
+  unitPrice     Decimal
+  discount      Decimal         @default(0)
+  tax           Decimal         @default(0)
+  netAmount     Decimal
+  costPrice     Decimal         @default(0)
+  profit        Decimal         @default(0)
+  status        OrderItemStatus @default(ACTIVE)
   shipmentItems ShipmentItem[]
-  returnItems ReturnItem[]
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  returnItems   ReturnItem[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@map("orderitem")
 }
 
 model Shipment {
-  id                    Int              @id @default(autoincrement())
-  shipmentNumber        String           @unique
-  order                 Order            @relation(fields: [orderId], references: [id])
+  id                    Int            @id @default(autoincrement())
+  shipmentNumber        String         @unique
+  order                 Order          @relation(fields: [orderId], references: [id])
   orderId               Int
   carrierName           String
   trackingNumber        String?
@@ -1155,59 +1204,63 @@ model Shipment {
   dispatchDate          DateTime?
   estimatedDeliveryDate DateTime?
   deliveredDate         DateTime?
-  shippingCost          Decimal          @default(0)
-  status                ShipmentStatus   @default(PENDING)
+  shippingCost          Decimal        @default(0)
+  status                ShipmentStatus @default(PENDING)
   items                 ShipmentItem[]
-  createdAt             DateTime         @default(now())
-  updatedAt             DateTime         @updatedAt
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
 }
 
 model ShipmentItem {
-  id          Int      @id @default(autoincrement())
-  shipment    Shipment @relation(fields: [shipmentId], references: [id])
+  id          Int       @id @default(autoincrement())
+  shipment    Shipment  @relation(fields: [shipmentId], references: [id])
   shipmentId  Int
   orderItem   OrderItem @relation(fields: [orderItemId], references: [id])
   orderItemId Int
-  quantity    Int      @default(1)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  quantity    Int       @default(1)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Invoice {
-  id            Int           @id @default(autoincrement())
-  invoiceNumber String        @unique
-  order         Order         @relation(fields: [orderId], references: [id])
-  orderId       Int           @unique
-  invoiceDate   DateTime      @default(now())
-  invoiceStatus InvoiceStatus @default(DRAFT)
-  gstAmount     Decimal       @default(0)
-  cgst          Decimal       @default(0)
-  sgst          Decimal       @default(0)
-  igst          Decimal       @default(0)
-  discount      Decimal       @default(0)
-  roundOff      Decimal       @default(0)
-  netAmount     Decimal       @default(0)
+  id            Int              @id @default(autoincrement())
+  invoiceNumber String           @unique
+  order         Order            @relation(fields: [orderId], references: [id])
+  orderId       Int              @unique
+  invoiceDate   DateTime         @default(now())
+  invoiceStatus InvoiceStatus    @default(DRAFT)
+  gstAmount     Decimal          @default(0)
+  cgst          Decimal          @default(0)
+  sgst          Decimal          @default(0)
+  igst          Decimal          @default(0)
+  discount      Decimal          @default(0)
+  roundOff      Decimal          @default(0)
+  netAmount     Decimal          @default(0)
   invoicePdfUrl String?
   payments      InvoicePayment[]
   creditNotes   CreditNote[]
   debitNotes    DebitNote[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@map("invoice")
 }
 
 model ReturnRequest {
-  id             Int          @id @default(autoincrement())
-  returnNumber   String       @unique
-  order          Order        @relation(fields: [orderId], references: [id])
-  orderId        Int
-  reason         String?
-  requestedDate  DateTime     @default(now())
-  approvedDate   DateTime?
-  rejectedDate   DateTime?
-  status         ReturnStatus @default(PENDING)
-  items          ReturnItem[]
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  id            Int          @id @default(autoincrement())
+  returnNumber  String       @unique
+  order         Order        @relation(fields: [orderId], references: [id])
+  orderId       Int
+  reason        String?
+  requestedDate DateTime     @default(now())
+  approvedDate  DateTime?
+  rejectedDate  DateTime?
+  status        ReturnStatus @default(PENDING)
+  items         ReturnItem[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@map("returnrequest")
 }
 
 model ReturnItem {
@@ -1235,16 +1288,18 @@ model Refund {
   refundDate           DateTime?
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
+
+  @@map("refund")
 }
 
 model PaymentMethod {
-  id          Int       @id @default(autoincrement())
-  code        String    @unique
+  id          Int      @id @default(autoincrement())
+  code        String   @unique
   name        String
   description String?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model PaymentGateway {
@@ -1260,96 +1315,98 @@ model PaymentGateway {
 }
 
 model Payment {
-  id                  Int                  @id @default(autoincrement())
-  paymentNumber       String               @unique
-  order               Order                @relation(fields: [orderId], references: [id])
-  orderId             Int
-  customer            Customer?            @relation(fields: [customerId], references: [id])
-  customerId          Int?
-  gateway             PaymentGatewayProvider
-  paymentMethod       PaymentMethodType
-  currency            String               @default("INR")
-  exchangeRate        Decimal              @default(1)
-  amount              Decimal              @default(0)
-  capturedAmount      Decimal              @default(0)
-  refundedAmount      Decimal              @default(0)
+  id                   Int                    @id @default(autoincrement())
+  paymentNumber        String                 @unique
+  order                Order                  @relation(fields: [orderId], references: [id])
+  orderId              Int
+  customer             Customer?              @relation(fields: [customerId], references: [id])
+  customerId           Int?
+  gateway              PaymentGatewayProvider
+  paymentMethod        PaymentMethodType
+  currency             String                 @default("INR")
+  exchangeRate         Decimal                @default(1)
+  amount               Decimal                @default(0)
+  capturedAmount       Decimal                @default(0)
+  refundedAmount       Decimal                @default(0)
   transactionReference String?
-  gatewayReference    String?
-  gatewayOrderId      String?
-  gatewayPaymentId    String?
-  gatewaySignature    String?
-  status              PaymentStatusType    @default(PENDING)
-  failureReason       String?
-  attemptCount        Int                  @default(0)
-  paidAt              DateTime?
-  transactions        PaymentTransaction[]
-  settlements         PaymentSettlement[]
-  webhooks            PaymentWebhook[]
-  invoicePayments     InvoicePayment[]
-  auditLogs           PaymentAuditLog[]
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  gatewayReference     String?
+  gatewayOrderId       String?
+  gatewayPaymentId     String?
+  gatewaySignature     String?
+  status               PaymentStatusType      @default(PENDING)
+  failureReason        String?
+  attemptCount         Int                    @default(0)
+  paidAt               DateTime?
+  transactions         PaymentTransaction[]
+  settlements          PaymentSettlement[]
+  webhooks             PaymentWebhook[]
+  invoicePayments      InvoicePayment[]
+  auditLogs            PaymentAuditLog[]
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+
+  @@map("payment")
 }
 
 model PaymentTransaction {
-  id                   Int                  @id @default(autoincrement())
-  payment              Payment              @relation(fields: [paymentId], references: [id])
+  id                   Int                    @id @default(autoincrement())
+  payment              Payment                @relation(fields: [paymentId], references: [id])
   paymentId            Int
   type                 PaymentTransactionType
-  amount               Decimal              @default(0)
+  amount               Decimal                @default(0)
   gatewayReference     String?
   transactionReference String?
   status               PaymentStatusType
   remark               String?
-  executedAt           DateTime             @default(now())
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
+  executedAt           DateTime               @default(now())
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
 }
 
 model PaymentWebhook {
-  id           Int           @id @default(autoincrement())
-  payment      Payment?      @relation(fields: [paymentId], references: [id])
-  paymentId    Int?
-  provider     PaymentGatewayProvider
-  eventType    String
-  payload      Json
-  headers      Json
-  verified     Boolean       @default(false)
-  status       WebhookStatus @default(PENDING)
-  response     Json?
-  error        String?
-  receivedAt   DateTime      @default(now())
-  processedAt  DateTime?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id          Int                    @id @default(autoincrement())
+  payment     Payment?               @relation(fields: [paymentId], references: [id])
+  paymentId   Int?
+  provider    PaymentGatewayProvider
+  eventType   String
+  payload     Json
+  headers     Json
+  verified    Boolean                @default(false)
+  status      WebhookStatus          @default(PENDING)
+  response    Json?
+  error       String?
+  receivedAt  DateTime               @default(now())
+  processedAt DateTime?
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
 }
 
 model PaymentSettlement {
-  id            Int              @id @default(autoincrement())
-  payment       Payment?         @relation(fields: [paymentId], references: [id])
-  paymentId     Int?
-  settlementNumber String         @unique
-  gateway       PaymentGatewayProvider
-  settlementDate DateTime
-  grossAmount   Decimal          @default(0)
-  charges       Decimal          @default(0)
-  taxes         Decimal          @default(0)
-  netAmount     Decimal          @default(0)
-  status        SettlementStatus @default(PENDING)
-  remarks       String?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  id               Int                    @id @default(autoincrement())
+  payment          Payment?               @relation(fields: [paymentId], references: [id])
+  paymentId        Int?
+  settlementNumber String                 @unique
+  gateway          PaymentGatewayProvider
+  settlementDate   DateTime
+  grossAmount      Decimal                @default(0)
+  charges          Decimal                @default(0)
+  taxes            Decimal                @default(0)
+  netAmount        Decimal                @default(0)
+  status           SettlementStatus       @default(PENDING)
+  remarks          String?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
 }
 
 model PaymentReconciliation {
-  id                         Int                  @id @default(autoincrement())
-  gatewayTransactionReference String
+  id                           Int                  @id @default(autoincrement())
+  gatewayTransactionReference  String
   internalTransactionReference String
-  differenceAmount           Decimal              @default(0)
-  status                     ReconciliationStatus @default(PENDING)
-  remarks                    String?
-  createdAt                  DateTime             @default(now())
-  updatedAt                  DateTime             @updatedAt
+  differenceAmount             Decimal              @default(0)
+  status                       ReconciliationStatus @default(PENDING)
+  remarks                      String?
+  createdAt                    DateTime             @default(now())
+  updatedAt                    DateTime             @updatedAt
 }
 
 model CreditNote {
@@ -1383,20 +1440,20 @@ model DebitNote {
 }
 
 model TaxConfiguration {
-  id          Int              @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   name        String
   description String?
-  gstRate     Decimal          @default(0)
-  cgstRate    Decimal          @default(0)
-  sgstRate    Decimal          @default(0)
-  igstRate    Decimal          @default(0)
-  cessRate    Decimal          @default(0)
+  gstRate     Decimal  @default(0)
+  cgstRate    Decimal  @default(0)
+  sgstRate    Decimal  @default(0)
+  igstRate    Decimal  @default(0)
+  cessRate    Decimal  @default(0)
   hsnCode     String?
   sacCode     String?
-  inclusive   Boolean          @default(false)
-  isActive    Boolean          @default(true)
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  inclusive   Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model GSTConfiguration {
@@ -1416,37 +1473,37 @@ model GSTConfiguration {
 }
 
 model InvoicePayment {
-  id          Int                  @id @default(autoincrement())
-  invoice     Invoice              @relation(fields: [invoiceId], references: [id])
-  invoiceId   Int
-  payment     Payment              @relation(fields: [paymentId], references: [id])
-  paymentId   Int
-  amount      Decimal              @default(0)
-  status      InvoicePaymentStatus @default(PENDING)
-  paidAt      DateTime?
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
+  id        Int                  @id @default(autoincrement())
+  invoice   Invoice              @relation(fields: [invoiceId], references: [id])
+  invoiceId Int
+  payment   Payment              @relation(fields: [paymentId], references: [id])
+  paymentId Int
+  amount    Decimal              @default(0)
+  status    InvoicePaymentStatus @default(PENDING)
+  paidAt    DateTime?
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
 }
 
 model PaymentAuditLog {
-  id         Int      @id @default(autoincrement())
-  payment    Payment  @relation(fields: [paymentId], references: [id])
-  paymentId  Int
-  action     String
-  actorId    Int?
-  details    Json?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  payment   Payment  @relation(fields: [paymentId], references: [id])
+  paymentId Int
+  action    String
+  actorId   Int?
+  details   Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model OrderNote {
-  id         Int      @id @default(autoincrement())
-  order      Order    @relation(fields: [orderId], references: [id])
-  orderId    Int
-  note       String
-  createdBy  Int?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  order     Order    @relation(fields: [orderId], references: [id])
+  orderId   Int
+  note      String
+  createdBy Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model OrderStatusHistory {
@@ -1461,40 +1518,42 @@ model OrderStatusHistory {
 }
 
 model OrderTimeline {
-  id         Int                    @id @default(autoincrement())
-  order      Order                  @relation(fields: [orderId], references: [id])
-  orderId    Int
-  eventType  OrderTimelineEventType
+  id          Int                    @id @default(autoincrement())
+  order       Order                  @relation(fields: [orderId], references: [id])
+  orderId     Int
+  eventType   OrderTimelineEventType
   description String
-  createdAt  DateTime               @default(now())
+  createdAt   DateTime               @default(now())
 }
 
 model OrderAuditLog {
-  id         Int      @id @default(autoincrement())
-  order      Order    @relation(fields: [orderId], references: [id])
-  orderId    Int
-  action     String
-  actorId    Int?
-  details    Json?
-  createdAt  DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  order     Order    @relation(fields: [orderId], references: [id])
+  orderId   Int
+  action    String
+  actorId   Int?
+  details   Json?
+  createdAt DateTime @default(now())
 }
 
 model Category {
-  id            Int          @id @default(autoincrement())
+  id            Int           @id @default(autoincrement())
   name          String
   code          String
   description   String?
   slug          String
   image         String?
-  displayOrder  Int          @default(0)
-  status        MasterStatus @default(ACTIVE)
-  isActive      Boolean      @default(true)
-  isDeleted     Boolean      @default(false)
+  displayOrder  Int           @default(0)
+  status        MasterStatus  @default(ACTIVE)
+  isActive      Boolean       @default(true)
+  isDeleted     Boolean       @default(false)
   subCategories SubCategory[]
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
   createdBy     Int?
   updatedBy     Int?
+
+  @@map("category")
 }
 
 model SubCategory {
@@ -1514,6 +1573,8 @@ model SubCategory {
   updatedAt    DateTime     @updatedAt
   createdBy    Int?
   updatedBy    Int?
+
+  @@map("subcategory")
 }
 
 model Brand {
@@ -1531,6 +1592,8 @@ model Brand {
   updatedAt    DateTime     @updatedAt
   createdBy    Int?
   updatedBy    Int?
+
+  @@map("brand")
 }
 
 model Fabric {
@@ -1548,6 +1611,8 @@ model Fabric {
   updatedAt    DateTime     @updatedAt
   createdBy    Int?
   updatedBy    Int?
+
+  @@map("fabric")
 }
 
 model Color {
@@ -1565,6 +1630,8 @@ model Color {
   updatedAt    DateTime     @updatedAt
   createdBy    Int?
   updatedBy    Int?
+
+  @@map("color")
 }
 
 model Size {
@@ -1582,6 +1649,8 @@ model Size {
   updatedAt    DateTime     @updatedAt
   createdBy    Int?
   updatedBy    Int?
+
+  @@map("size")
 }
 
 model Unit {
@@ -1599,6 +1668,8 @@ model Unit {
   updatedAt    DateTime     @updatedAt
   createdBy    Int?
   updatedBy    Int?
+
+  @@map("unit")
 }
 
 model Tax {
@@ -1616,6 +1687,8 @@ model Tax {
   updatedAt    DateTime     @updatedAt
   createdBy    Int?
   updatedBy    Int?
+
+  @@map("tax")
 }
 
 model Occasion {
@@ -1633,6 +1706,8 @@ model Occasion {
   updatedAt    DateTime     @updatedAt
   createdBy    Int?
   updatedBy    Int?
+
+  @@map("occasion")
 }
 
 model Pattern {
@@ -1650,6 +1725,8 @@ model Pattern {
   updatedAt    DateTime     @updatedAt
   createdBy    Int?
   updatedBy    Int?
+
+  @@map("pattern")
 }
 
 model WeavingStyle {
@@ -1667,6 +1744,8 @@ model WeavingStyle {
   updatedAt    DateTime     @updatedAt
   createdBy    Int?
   updatedBy    Int?
+
+  @@map("weavingstyle")
 }
 
 model BorderType {
@@ -1684,6 +1763,8 @@ model BorderType {
   updatedAt    DateTime     @updatedAt
   createdBy    Int?
   updatedBy    Int?
+
+  @@map("bordertype")
 }
 
 model WorkType {
@@ -1701,6 +1782,8 @@ model WorkType {
   updatedAt    DateTime     @updatedAt
   createdBy    Int?
   updatedBy    Int?
+
+  @@map("worktype")
 }
 
 model SleeveType {
@@ -1718,6 +1801,8 @@ model SleeveType {
   updatedAt    DateTime     @updatedAt
   createdBy    Int?
   updatedBy    Int?
+
+  @@map("sleevetype")
 }
 
 model NeckType {
@@ -1735,6 +1820,8 @@ model NeckType {
   updatedAt    DateTime     @updatedAt
   createdBy    Int?
   updatedBy    Int?
+
+  @@map("necktype")
 }
 
 model Tag {
@@ -1753,6 +1840,8 @@ model Tag {
   createdBy    Int?
   updatedBy    Int?
   productTags  ProductTag[]
+
+  @@map("tag")
 }
 
 model CountryOfOrigin {
@@ -1770,6 +1859,8 @@ model CountryOfOrigin {
   updatedAt    DateTime     @updatedAt
   createdBy    Int?
   updatedBy    Int?
+
+  @@map("countryoforigin")
 }
 
 model CareInstruction {
@@ -1787,6 +1878,8 @@ model CareInstruction {
   updatedAt    DateTime     @updatedAt
   createdBy    Int?
   updatedBy    Int?
+
+  @@map("careinstruction")
 }
 
 enum MediaStatus {
@@ -1822,6 +1915,8 @@ model Media {
   isDeleted       Boolean     @default(false)
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+
+  @@map("media")
 }
 
 enum ProductStatus {
@@ -1848,164 +1943,173 @@ enum ProductVariantStatus {
 }
 
 model Product {
-  id                  Int                @id @default(autoincrement())
-  productCode         String             @unique
-  sku                 String             @unique
-  barcode             String?
-  productName         String
-  slug                String             @unique
-  shortDescription    String?
-  description         String?
-  categoryId          Int?
-  subCategoryId       Int?
-  brandId             Int?
-  fabricId            Int?
-  unitId              Int?
-  gstId               Int?
+  id                 Int                    @id @default(autoincrement())
+  productCode        String                 @unique
+  sku                String                 @unique
+  barcode            String?
+  productName        String
+  slug               String                 @unique
+  shortDescription   String?
+  description        String?
+  categoryId         Int?
+  subCategoryId      Int?
+  brandId            Int?
+  fabricId           Int?
+  unitId             Int?
+  gstId              Int?
   countryOfOriginId  Int?
-  careInstructionId   Int?
-  occasionId          Int?
-  patternId           Int?
-  weavingStyleId      Int?
-  borderTypeId        Int?
-  workTypeId          Int?
-  weight              Float?
-  length              Float?
-  width               Float?
-  height              Float?
-  costPrice           Decimal?
-  sellingPrice        Decimal?
-  mrp                 Decimal?
-  discountType        DiscountType?      @default(NONE)
-  discountValue       Decimal?
-  taxAmount           Decimal?
-  netAmount           Decimal?
-  metaTitle           String?
-  metaDescription     String?
+  careInstructionId  Int?
+  occasionId         Int?
+  patternId          Int?
+  weavingStyleId     Int?
+  borderTypeId       Int?
+  workTypeId         Int?
+  weight             Float?
+  length             Float?
+  width              Float?
+  height             Float?
+  costPrice          Decimal?
+  sellingPrice       Decimal?
+  mrp                Decimal?
+  discountType       DiscountType?          @default(NONE)
+  discountValue      Decimal?
+  taxAmount          Decimal?
+  netAmount          Decimal?
+  metaTitle          String?
+  metaDescription    String?
   metaKeywords       String?
-  canonicalUrl        String?
-  schemaJsonLd        Json?
-  openGraph           Json?
-  twitterCard         Json?
-  seoScore            Int?
+  canonicalUrl       String?
+  schemaJsonLd       Json?
+  openGraph          Json?
+  twitterCard        Json?
+  seoScore           Int?
   searchKeywords     String?
-  isFeatured          Boolean            @default(false)
-  isTrending          Boolean            @default(false)
-  isBestSeller        Boolean            @default(false)
-  isNewArrival        Boolean            @default(false)
-  status              ProductStatus      @default(DRAFT)
-  publishedAt         DateTime?
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
-  createdBy           Int?
-  updatedBy           Int?
-  variants            ProductVariant[]
-  images              ProductMedia[]
-  attributes          ProductAttribute[]
-  tags                ProductTag[]
-  relations           ProductRelation[] @relation("ProductRelationParent")
-  relatedBy           ProductRelation[] @relation("ProductRelationTarget")
-  wishlistItems       CustomerWishlist[]
-  reviews             CustomerReview[]
-  cartItems           CartItem[]
-  orderItems          OrderItem[]
-  dealOfTheDay        DealOfTheDay[]
-  purchaseOrderItems  PurchaseOrderItem[]
-  grnItems            GoodsReceiptNoteItem[]
-  stockAdjustments    StockAdjustment[]
-  stockTransfers      StockTransfer[]
-  inventoryAuditLogs  InventoryAuditLog[]
-  stockMovements      StockMovement[]
-  inventories         Inventory[]
-  auditLogs           ProductAuditLog[]
+  isFeatured         Boolean                @default(false)
+  isTrending         Boolean                @default(false)
+  isBestSeller       Boolean                @default(false)
+  isNewArrival       Boolean                @default(false)
+  status             ProductStatus          @default(DRAFT)
+  publishedAt        DateTime?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  createdBy          Int?
+  updatedBy          Int?
+  variants           ProductVariant[]
+  images             ProductMedia[]
+  attributes         ProductAttribute[]
+  tags               ProductTag[]
+  relations          ProductRelation[]      @relation("ProductRelationParent")
+  relatedBy          ProductRelation[]      @relation("ProductRelationTarget")
+  wishlistItems      CustomerWishlist[]
+  reviews            CustomerReview[]
+  cartItems          CartItem[]
+  orderItems         OrderItem[]
+  dealOfTheDay       DealOfTheDay[]
+  purchaseOrderItems PurchaseOrderItem[]
+  grnItems           GoodsReceiptNoteItem[]
+  stockAdjustments   StockAdjustment[]
+  stockTransfers     StockTransfer[]
+  inventoryAuditLogs InventoryAuditLog[]
+  stockMovements     StockMovement[]
+  inventories        Inventory[]
+  auditLogs          ProductAuditLog[]
+
+  @@map("product")
 }
 
 model ProductVariant {
-  id             Int                  @id @default(autoincrement())
-  product        Product              @relation(fields: [productId], references: [id])
-  productId      Int
-  variantCode    String?              @unique
-  sku            String               @unique
-  barcode        String?
-  colorId        Int?
-  sizeId         Int?
-  weight         Float?
-  length         Float?
-  width          Float?
-  height         Float?
-  costPrice      Decimal?
-  sellingPrice   Decimal?
-  mrp            Decimal?
-  discountType   DiscountType?        @default(NONE)
-  discountValue  Decimal?
-  taxAmount      Decimal?
-  netAmount      Decimal?
-  stock          Int                  @default(0)
-  minimumStock   Int?                 @default(0)
-  maximumStock   Int?                 @default(0)
-  status         ProductVariantStatus @default(ACTIVE)
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  id                 Int                    @id @default(autoincrement())
+  product            Product                @relation(fields: [productId], references: [id])
+  productId          Int
+  variantCode        String?                @unique
+  sku                String                 @unique
+  barcode            String?
+  colorId            Int?
+  sizeId             Int?
+  weight             Float?
+  length             Float?
+  width              Float?
+  height             Float?
+  costPrice          Decimal?
+  sellingPrice       Decimal?
+  mrp                Decimal?
+  discountType       DiscountType?          @default(NONE)
+  discountValue      Decimal?
+  taxAmount          Decimal?
+  netAmount          Decimal?
+  stock              Int                    @default(0)
+  minimumStock       Int?                   @default(0)
+  maximumStock       Int?                   @default(0)
+  status             ProductVariantStatus   @default(ACTIVE)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
   purchaseOrderItems PurchaseOrderItem[]
-  grnItems            GoodsReceiptNoteItem[]
-  cartItems           CartItem[]
-  orderItems          OrderItem[]
-  dealOfTheDay        DealOfTheDay[]
-  stockAdjustments    StockAdjustment[]
-  stockTransfers      StockTransfer[]
-  inventoryAuditLogs  InventoryAuditLog[]
-  stockMovements StockMovement[]
-  inventories    Inventory[]
-  wishlistItems  CustomerWishlist[]
-  reviews        CustomerReview[]
+  grnItems           GoodsReceiptNoteItem[]
+  cartItems          CartItem[]
+  orderItems         OrderItem[]
+  dealOfTheDay       DealOfTheDay[]
+  stockAdjustments   StockAdjustment[]
+  stockTransfers     StockTransfer[]
+  inventoryAuditLogs InventoryAuditLog[]
+  stockMovements     StockMovement[]
+  inventories        Inventory[]
+  wishlistItems      CustomerWishlist[]
+  reviews            CustomerReview[]
+
+  @@map("productvariant")
 }
 
 model ProductMedia {
-  id            Int       @id @default(autoincrement())
-  product       Product   @relation(fields: [productId], references: [id])
-  productId     Int
-  mediaType     MediaType @default(IMAGE)
-  imageUrl      String
-  isPrimary     Boolean   @default(false)
-  displayOrder  Int       @default(0)
-  altText       String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           Int       @id @default(autoincrement())
+  product      Product   @relation(fields: [productId], references: [id])
+  productId    Int
+  mediaType    MediaType @default(IMAGE)
+  imageUrl     String
+  isPrimary    Boolean   @default(false)
+  displayOrder Int       @default(0)
+  altText      String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("productmedia")
 }
 
 model Attribute {
-  id           Int                 @id @default(autoincrement())
-  name         String
-  code         String              @unique
-  description  String?
-  slug         String              @unique
-  status       MasterStatus        @default(ACTIVE)
-  isActive     Boolean             @default(true)
-  isDeleted    Boolean             @default(false)
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
-  createdBy    Int?
-  updatedBy    Int?
-  values       AttributeValue[]
+  id          Int              @id @default(autoincrement())
+  name        String
+  code        String           @unique
+  description String?
+  slug        String           @unique
+  status      MasterStatus     @default(ACTIVE)
+  isActive    Boolean          @default(true)
+  isDeleted   Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  createdBy   Int?
+  updatedBy   Int?
+  values      AttributeValue[]
+
+  @@map("attribute")
 }
 
 model AttributeValue {
-  id                 Int                @id @default(autoincrement())
-  attribute          Attribute          @relation(fields: [attributeId], references: [id])
-  attributeId        Int
-  value              String
-  code               String?
-  slug               String?
-  status             MasterStatus       @default(ACTIVE)
-  isActive           Boolean            @default(true)
-  isDeleted          Boolean            @default(false)
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  createdBy          Int?
-  updatedBy          Int?
-  productAttributes  ProductAttribute[]
+  id                Int                @id @default(autoincrement())
+  attribute         Attribute          @relation(fields: [attributeId], references: [id])
+  attributeId       Int
+  value             String
+  code              String?
+  slug              String?
+  status            MasterStatus       @default(ACTIVE)
+  isActive          Boolean            @default(true)
+  isDeleted         Boolean            @default(false)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  createdBy         Int?
+  updatedBy         Int?
+  productAttributes ProductAttribute[]
 
   @@unique([attributeId, value])
+  @@map("attributevalue")
 }
 
 model ProductAttribute {
@@ -2017,41 +2121,43 @@ model ProductAttribute {
   updatedAt        DateTime       @updatedAt
 
   @@id([productId, attributeValueId])
+  @@map("productattribute")
 }
 
 model ProductTag {
-  product   Product @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
   productId Int
-  tag       Tag     @relation(fields: [tagId], references: [id])
+  tag       Tag      @relation(fields: [tagId], references: [id])
   tagId     Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@id([productId, tagId])
+  @@map("producttag")
 }
 
 model ProductRelation {
-  id               Int              @id @default(autoincrement())
-  product          Product          @relation("ProductRelationParent", fields: [productId], references: [id])
+  id               Int                 @id @default(autoincrement())
+  product          Product             @relation("ProductRelationParent", fields: [productId], references: [id])
   productId        Int
-  relatedProduct   Product          @relation("ProductRelationTarget", fields: [relatedProductId], references: [id])
+  relatedProduct   Product             @relation("ProductRelationTarget", fields: [relatedProductId], references: [id])
   relatedProductId Int
   relationType     ProductRelationType
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
 
   @@unique([productId, relatedProductId, relationType])
 }
 
 model ProductAuditLog {
-  id          Int        @id @default(autoincrement())
-  product     Product    @relation(fields: [productId], references: [id])
-  productId   Int
-  actorId     Int?
-  action      String
-  details     Json?
-  previous    Json?
-  createdAt   DateTime   @default(now())
+  id        Int      @id @default(autoincrement())
+  product   Product  @relation(fields: [productId], references: [id])
+  productId Int
+  actorId   Int?
+  action    String
+  details   Json?
+  previous  Json?
+  createdAt DateTime @default(now())
 }
 
 enum WarehouseStatus {
@@ -2118,29 +2224,31 @@ enum StockTransferStatus {
 }
 
 model Warehouse {
-  id                  Int                  @id @default(autoincrement())
-  warehouseCode       String               @unique
-  warehouseName       String
-  contactPerson       String?
-  phone               String?
-  email               String?
-  address             String?
-  city                String?
-  state               String?
-  country             String?
-  pincode             String?
-  status              WarehouseStatus      @default(ACTIVE)
-  inventories         Inventory[]
-  stockMovements      StockMovement[]
-  grns                GoodsReceiptNote[]
-  stockAdjustments    StockAdjustment[]
-  outgoingTransfers   StockTransfer[]      @relation("SourceWarehouse")
-  incomingTransfers   StockTransfer[]      @relation("DestinationWarehouse")
-  auditLogs           InventoryAuditLog[]
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  createdBy           Int?
-  updatedBy           Int?
+  id                Int                 @id @default(autoincrement())
+  warehouseCode     String              @unique
+  warehouseName     String
+  contactPerson     String?
+  phone             String?
+  email             String?
+  address           String?
+  city              String?
+  state             String?
+  country           String?
+  pincode           String?
+  status            WarehouseStatus     @default(ACTIVE)
+  inventories       Inventory[]
+  stockMovements    StockMovement[]
+  grns              GoodsReceiptNote[]
+  stockAdjustments  StockAdjustment[]
+  outgoingTransfers StockTransfer[]     @relation("SourceWarehouse")
+  incomingTransfers StockTransfer[]     @relation("DestinationWarehouse")
+  auditLogs         InventoryAuditLog[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  createdBy         Int?
+  updatedBy         Int?
+
+  @@map("warehouse")
 }
 
 model Supplier {
@@ -2162,194 +2270,213 @@ model Supplier {
   updatedAt      DateTime        @updatedAt
   createdBy      Int?
   updatedBy      Int?
+
+  @@map("supplier")
 }
 
 model Inventory {
-  id             Int             @id @default(autoincrement())
-  product        Product         @relation(fields: [productId], references: [id])
+  id             Int                 @id @default(autoincrement())
+  product        Product             @relation(fields: [productId], references: [id])
   productId      Int
-  variant        ProductVariant? @relation(fields: [variantId], references: [id])
+  variant        ProductVariant?     @relation(fields: [variantId], references: [id])
   variantId      Int?
-  warehouse      Warehouse       @relation(fields: [warehouseId], references: [id])
+  warehouse      Warehouse           @relation(fields: [warehouseId], references: [id])
   warehouseId    Int
-  currentStock   Int             @default(0)
-  reservedStock  Int             @default(0)
-  availableStock Int             @default(0)
-  minimumStock   Int             @default(0)
-  maximumStock   Int             @default(0)
-  reorderLevel   Int             @default(0)
-  status         InventoryStatus @default(ACTIVE)
+  currentStock   Int                 @default(0)
+  reservedStock  Int                 @default(0)
+  availableStock Int                 @default(0)
+  minimumStock   Int                 @default(0)
+  maximumStock   Int                 @default(0)
+  reorderLevel   Int                 @default(0)
+  status         InventoryStatus     @default(ACTIVE)
   stockMovements StockMovement[]
   auditLogs      InventoryAuditLog[]
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
   createdBy      Int?
   updatedBy      Int?
 
   @@unique([productId, variantId, warehouseId])
+  @@map("inventory")
 }
 
 model StockMovement {
-  id              Int                 @id @default(autoincrement())
-  product         Product             @relation(fields: [productId], references: [id])
-  productId       Int
-  variant         ProductVariant?     @relation(fields: [variantId], references: [id])
-  variantId       Int?
-  warehouse       Warehouse           @relation(fields: [warehouseId], references: [id])
-  warehouseId     Int
-  inventory       Inventory?          @relation(fields: [inventoryId], references: [id])
-  inventoryId     Int?
-  movementType    StockMovementType
-  quantity        Int
-  referenceNumber String?
-  remarks         String?
-  date            DateTime            @default(now())
-  purchaseOrder   PurchaseOrder?      @relation(fields: [purchaseOrderId], references: [id])
-  purchaseOrderId Int?
-  grn             GoodsReceiptNote?   @relation(fields: [grnId], references: [id])
-  grnId           Int?
-  stockTransfer   StockTransfer?      @relation(fields: [stockTransferId], references: [id])
-  stockTransferId Int?
-  stockAdjustment StockAdjustment?    @relation(fields: [stockAdjustmentId], references: [id])
+  id                Int               @id @default(autoincrement())
+  product           Product           @relation(fields: [productId], references: [id])
+  productId         Int
+  variant           ProductVariant?   @relation(fields: [variantId], references: [id])
+  variantId         Int?
+  warehouse         Warehouse         @relation(fields: [warehouseId], references: [id])
+  warehouseId       Int
+  inventory         Inventory?        @relation(fields: [inventoryId], references: [id])
+  inventoryId       Int?
+  movementType      StockMovementType
+  quantity          Int
+  referenceNumber   String?
+  remarks           String?
+  date              DateTime          @default(now())
+  purchaseOrder     PurchaseOrder?    @relation(fields: [purchaseOrderId], references: [id])
+  purchaseOrderId   Int?
+  grn               GoodsReceiptNote? @relation(fields: [grnId], references: [id])
+  grnId             Int?
+  stockTransfer     StockTransfer?    @relation(fields: [stockTransferId], references: [id])
+  stockTransferId   Int?
+  stockAdjustment   StockAdjustment?  @relation(fields: [stockAdjustmentId], references: [id])
   stockAdjustmentId Int?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@map("stockmovement")
 }
 
 model PurchaseOrder {
-  id            Int                 @id @default(autoincrement())
-  poNumber      String              @unique
-  supplier      Supplier            @relation(fields: [supplierId], references: [id])
-  supplierId    Int
-  orderDate     DateTime
-  expectedDate  DateTime?
-  status        PurchaseOrderStatus @default(PENDING)
-  totalAmount   Decimal             @default(0)
-  taxAmount     Decimal             @default(0)
-  netAmount     Decimal             @default(0)
-  remarks       String?
-  items         PurchaseOrderItem[]
+  id             Int                 @id @default(autoincrement())
+  poNumber       String              @unique
+  supplier       Supplier            @relation(fields: [supplierId], references: [id])
+  supplierId     Int
+  orderDate      DateTime
+  expectedDate   DateTime?
+  status         PurchaseOrderStatus @default(PENDING)
+  totalAmount    Decimal             @default(0)
+  taxAmount      Decimal             @default(0)
+  netAmount      Decimal             @default(0)
+  remarks        String?
+  items          PurchaseOrderItem[]
   stockMovements StockMovement[]
-  grns          GoodsReceiptNote[]
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  createdBy     Int?
-  updatedBy     Int?
+  grns           GoodsReceiptNote[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  createdBy      Int?
+  updatedBy      Int?
+
+  @@map("purchaseorder")
 }
 
 model PurchaseOrderItem {
-  id             Int            @id @default(autoincrement())
-  purchaseOrder  PurchaseOrder  @relation(fields: [purchaseOrderId], references: [id])
+  id              Int             @id @default(autoincrement())
+  purchaseOrder   PurchaseOrder   @relation(fields: [purchaseOrderId], references: [id])
   purchaseOrderId Int
-  product        Product        @relation(fields: [productId], references: [id])
-  productId      Int
-  variant        ProductVariant? @relation(fields: [variantId], references: [id])
-  variantId      Int?
-  quantity       Int
-  rate           Decimal
-  discount       Decimal?        @default(0)
-  gst            Decimal?        @default(0)
-  netAmount      Decimal
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  product         Product         @relation(fields: [productId], references: [id])
+  productId       Int
+  variant         ProductVariant? @relation(fields: [variantId], references: [id])
+  variantId       Int?
+  quantity        Int
+  rate            Decimal
+  discount        Decimal?        @default(0)
+  gst             Decimal?        @default(0)
+  netAmount       Decimal
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@map("purchaseorderitem")
 }
 
 model GoodsReceiptNote {
-  id                 Int                    @id @default(autoincrement())
-  grnNumber          String                 @unique
-  purchaseOrder      PurchaseOrder          @relation(fields: [purchaseOrderId], references: [id])
-  purchaseOrderId    Int
-  warehouse          Warehouse              @relation(fields: [warehouseId], references: [id])
-  warehouseId        Int
-  receivedDate       DateTime              @default(now())
-  status             GRNStatus             @default(PARTIAL_RECEIVED)
-  totalReceivedAmount Decimal              @default(0)
-  rejectedQuantity   Int                    @default(0)
-  remarks            String?
-  items              GoodsReceiptNoteItem[]
-  stockMovements     StockMovement[]
-  createdAt          DateTime               @default(now())
-  updatedAt          DateTime               @updatedAt
-  createdBy          Int?
-  updatedBy          Int?
+  id                  Int                    @id @default(autoincrement())
+  grnNumber           String                 @unique
+  purchaseOrder       PurchaseOrder          @relation(fields: [purchaseOrderId], references: [id])
+  purchaseOrderId     Int
+  warehouse           Warehouse              @relation(fields: [warehouseId], references: [id])
+  warehouseId         Int
+  receivedDate        DateTime               @default(now())
+  status              GRNStatus              @default(PARTIAL_RECEIVED)
+  totalReceivedAmount Decimal                @default(0)
+  rejectedQuantity    Int                    @default(0)
+  remarks             String?
+  items               GoodsReceiptNoteItem[]
+  stockMovements      StockMovement[]
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  createdBy           Int?
+  updatedBy           Int?
+
+  @@map("goodsreceiptnote")
 }
 
 model GoodsReceiptNoteItem {
-  id               Int                @id @default(autoincrement())
-  grn              GoodsReceiptNote   @relation(fields: [grnId], references: [id])
+  id               Int              @id @default(autoincrement())
+  grn              GoodsReceiptNote @relation(fields: [grnId], references: [id])
   grnId            Int
-  product          Product            @relation(fields: [productId], references: [id])
+  product          Product          @relation(fields: [productId], references: [id])
   productId        Int
-  variant          ProductVariant?    @relation(fields: [variantId], references: [id])
+  variant          ProductVariant?  @relation(fields: [variantId], references: [id])
   variantId        Int?
   quantity         Int
   receivedQuantity Int
-  rejectedQuantity Int                @default(0)
+  rejectedQuantity Int              @default(0)
   rate             Decimal?
   netAmount        Decimal?
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@map("goodsreceiptnoteitem")
 }
 
 model StockAdjustment {
-  id               Int                    @id @default(autoincrement())
-  adjustmentNumber String                 @unique
-  product          Product                @relation(fields: [productId], references: [id])
+  id               Int                   @id @default(autoincrement())
+  adjustmentNumber String                @unique
+  product          Product               @relation(fields: [productId], references: [id])
   productId        Int
-  variant          ProductVariant?        @relation(fields: [variantId], references: [id])
+  variant          ProductVariant?       @relation(fields: [variantId], references: [id])
   variantId        Int?
-  warehouse        Warehouse              @relation(fields: [warehouseId], references: [id])
+  warehouse        Warehouse             @relation(fields: [warehouseId], references: [id])
   warehouseId      Int
   adjustmentType   StockAdjustmentType
   quantity         Int
   reason           String
   status           StockAdjustmentStatus @default(PENDING)
   referenceNumber  String?
-  createdAt        DateTime               @default(now())
-  updatedAt        DateTime               @updatedAt
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
   stockMovements   StockMovement[]
   createdBy        Int?
   updatedBy        Int?
+
+  @@map("stockadjustment")
 }
 
 model StockTransfer {
-  id                    Int                 @id @default(autoincrement())
-  transferNumber        String              @unique
-  product               Product             @relation(fields: [productId], references: [id])
-  productId             Int
-  variant               ProductVariant?     @relation(fields: [variantId], references: [id])
-  variantId             Int?
-  sourceWarehouse       Warehouse           @relation("SourceWarehouse", fields: [sourceWarehouseId], references: [id])
-  sourceWarehouseId     Int
-  destinationWarehouse  Warehouse           @relation("DestinationWarehouse", fields: [destinationWarehouseId], references: [id])
+  id                     Int                 @id @default(autoincrement())
+  transferNumber         String              @unique
+  product                Product             @relation(fields: [productId], references: [id])
+  productId              Int
+  variant                ProductVariant?     @relation(fields: [variantId], references: [id])
+  variantId              Int?
+  sourceWarehouse        Warehouse           @relation("SourceWarehouse", fields: [sourceWarehouseId], references: [id])
+  sourceWarehouseId      Int
+  destinationWarehouse   Warehouse           @relation("DestinationWarehouse", fields: [destinationWarehouseId], references: [id])
   destinationWarehouseId Int
-  quantity              Int
-  status                StockTransferStatus @default(PENDING)
-  referenceNumber       String?
-  remarks               String?
-  transferredAt         DateTime?
-  stockMovements        StockMovement[]
-  createdAt             DateTime             @default(now())
-  updatedAt             DateTime             @updatedAt
-  createdBy             Int?
-  updatedBy             Int?
+  quantity               Int
+  status                 StockTransferStatus @default(PENDING)
+  referenceNumber        String?
+  remarks                String?
+  transferredAt          DateTime?
+  stockMovements         StockMovement[]
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  createdBy              Int?
+  updatedBy              Int?
+
+  @@map("stocktransfer")
 }
 
 model InventoryAuditLog {
-  id          Int        @id @default(autoincrement())
-  inventory   Inventory? @relation(fields: [inventoryId], references: [id])
+  id          Int             @id @default(autoincrement())
+  inventory   Inventory?      @relation(fields: [inventoryId], references: [id])
   inventoryId Int?
-  product     Product    @relation(fields: [productId], references: [id])
+  product     Product         @relation(fields: [productId], references: [id])
   productId   Int
   variant     ProductVariant? @relation(fields: [variantId], references: [id])
   variantId   Int?
-  warehouse   Warehouse  @relation(fields: [warehouseId], references: [id])
+  warehouse   Warehouse       @relation(fields: [warehouseId], references: [id])
   warehouseId Int
   actorId     Int?
   action      String
   details     Json?
   previous    Json?
-  createdAt   DateTime   @default(now())
+  createdAt   DateTime        @default(now())
+
+  @@map("inventoryauditlog")
 }
 
 enum ProductRelationType {
@@ -2455,84 +2582,93 @@ enum ContentVersionStatus {
 
 // CMS Pages
 model CmsPage {
-  id               Int             @id @default(autoincrement())
-  pageCode         String          @unique
+  id               Int              @id @default(autoincrement())
+  pageCode         String           @unique
   title            String
-  slug             String          @unique
+  slug             String           @unique
   shortDescription String?
-  content          String?         @db.LongText
+  content          String?          @db.LongText
   featuredImageId  Int?
   template         String?
   layout           String?
-  pageType         CmsPageType     @default(CONTENT)
-  visibility       CmsVisibility   @default(PUBLIC)
-  status           CmsPageStatus   @default(DRAFT)
+  pageType         CmsPageType      @default(CONTENT)
+  visibility       CmsVisibility    @default(PUBLIC)
+  status           CmsPageStatus    @default(DRAFT)
   publishedAt      DateTime?
   createdBy        Int?
   updatedBy        Int?
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
   seoMeta          SeoMeta?
   versions         ContentVersion[]
+
+  @@map("cmspage")
 }
 
 // Blog Category
 model BlogCategory {
-  id           Int         @id @default(autoincrement())
+  id           Int        @id @default(autoincrement())
   categoryName String
-  slug         String      @unique
+  slug         String     @unique
   description  String?
-  displayOrder Int         @default(0)
-  status       FaqStatus   @default(ACTIVE)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  displayOrder Int        @default(0)
+  status       FaqStatus  @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
   posts        BlogPost[]
+
+  @@map("blogcategory")
 }
 
 // Blog Tags
 model BlogTag {
-  id        Int        @id @default(autoincrement())
+  id        Int           @id @default(autoincrement())
   tagName   String
-  slug      String     @unique
-  createdAt DateTime   @default(now())
+  slug      String        @unique
+  createdAt DateTime      @default(now())
   posts     BlogPostTag[]
+
+  @@map("blogtag")
 }
 
 // Blog Posts
 model BlogPost {
-  id              Int           @id @default(autoincrement())
+  id              Int              @id @default(autoincrement())
   title           String
-  slug            String        @unique
+  slug            String           @unique
   excerpt         String?
-  content         String?       @db.LongText
+  content         String?          @db.LongText
   featuredImageId Int?
   authorId        Int?
-  category        BlogCategory? @relation(fields: [categoryId], references: [id])
+  category        BlogCategory?    @relation(fields: [categoryId], references: [id])
   categoryId      Int?
   readingTime     Int?
-  views           Int           @default(0)
-  likes           Int           @default(0)
-  commentsEnabled Boolean       @default(true)
-  status          BlogStatus    @default(DRAFT)
+  views           Int              @default(0)
+  likes           Int              @default(0)
+  commentsEnabled Boolean          @default(true)
+  status          BlogStatus       @default(DRAFT)
   publishedAt     DateTime?
   scheduledAt     DateTime?
   createdBy       Int?
   updatedBy       Int?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
   tags            BlogPostTag[]
   seoMeta         SeoMeta?
   versions        ContentVersion[]
+
+  @@map("blogpost")
 }
 
 // Blog Post Tags (junction)
 model BlogPostTag {
-  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
-  postId    Int
-  tag       BlogTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
-  tagId     Int
+  post   BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId Int
+  tag    BlogTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId  Int
 
   @@id([postId, tagId])
+  @@map("blogposttag")
 }
 
 // FAQs
@@ -2547,6 +2683,8 @@ model Faq {
   updatedBy    Int?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+
+  @@map("faq")
 }
 
 // Testimonials
@@ -2564,6 +2702,8 @@ model Testimonial {
   updatedBy    Int?
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
+
+  @@map("testimonial")
 }
 
 // Lookbooks
@@ -2580,6 +2720,8 @@ model Lookbook {
   updatedBy      Int?
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+
+  @@map("lookbook")
 }
 
 // Style Guides
@@ -2594,6 +2736,8 @@ model StyleGuide {
   updatedBy   Int?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@map("styleguide")
 }
 
 // Size Guides
@@ -2609,35 +2753,41 @@ model SizeGuide {
   updatedBy       Int?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+
+  @@map("sizeguide")
 }
 
 // Static Policies
 model Policy {
-  id         Int        @id @default(autoincrement())
-  policyType PolicyType @unique
+  id         Int              @id @default(autoincrement())
+  policyType PolicyType       @unique
   title      String
-  content    String     @db.LongText
-  isActive   Boolean    @default(true)
+  content    String           @db.LongText
+  isActive   Boolean          @default(true)
   updatedBy  Int?
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
   versions   ContentVersion[]
+
+  @@map("policy")
 }
 
 // Contact Us Information
 model ContactInfo {
-  id             Int      @id @default(autoincrement())
-  companyName    String
-  address        String?  @db.Text
-  phone          String?
-  email          String?
-  whatsapp       String?
-  googleMapUrl   String?
-  businessHours  Json?
-  isActive       Boolean  @default(true)
-  updatedBy      Int?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id            Int      @id @default(autoincrement())
+  companyName   String
+  address       String?  @db.Text
+  phone         String?
+  email         String?
+  whatsapp      String?
+  googleMapUrl  String?
+  businessHours Json?
+  isActive      Boolean  @default(true)
+  updatedBy     Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("contactinfo")
 }
 
 // Contact Inquiries
@@ -2654,37 +2804,43 @@ model ContactInquiry {
   resolvedAt   DateTime?
   createdAt    DateTime             @default(now())
   updatedAt    DateTime             @updatedAt
+
+  @@map("contactinquiry")
 }
 
 // Dynamic Menus
 model DynamicMenu {
-  id           Int       @id @default(autoincrement())
-  menuCode     String    @unique
+  id           Int      @id @default(autoincrement())
+  menuCode     String   @unique
   menuType     MenuType
   title        String
   items        Json
-  isActive     Boolean   @default(true)
-  displayOrder Int       @default(0)
+  isActive     Boolean  @default(true)
+  displayOrder Int      @default(0)
   createdBy    Int?
   updatedBy    Int?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("dynamicmenu")
 }
 
 // Footer Management
 model FooterConfig {
-  id           Int      @id @default(autoincrement())
-  configCode   String   @unique
-  columns      Json?
-  quickLinks   Json?
-  categories   Json?
-  services     Json?
-  newsletter   Json?
-  copyright    String?
-  isActive     Boolean  @default(true)
-  updatedBy    Int?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id         Int      @id @default(autoincrement())
+  configCode String   @unique
+  columns    Json?
+  quickLinks Json?
+  categories Json?
+  services   Json?
+  newsletter Json?
+  copyright  String?
+  isActive   Boolean  @default(true)
+  updatedBy  Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("footerconfig")
 }
 
 // Social Media Links
@@ -2697,6 +2853,8 @@ model SocialMediaLink {
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("socialmedialink")
 }
 
 // SEO Meta
@@ -2723,18 +2881,22 @@ model SeoMeta {
   cmsPageId     Int?        @unique
   blogPost      BlogPost?   @relation(fields: [blogPostId], references: [id])
   blogPostId    Int?        @unique
+
+  @@map("seometa")
 }
 
 // Sitemap Entry
 model SitemapEntry {
-  id            Int      @id @default(autoincrement())
-  url           String   @unique
-  changeFreq    String   @default("weekly")
-  priority      Float    @default(0.5)
-  lastModified  DateTime @default(now())
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  url          String   @unique
+  changeFreq   String   @default("weekly")
+  priority     Float    @default(0.5)
+  lastModified DateTime @default(now())
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("sitemapentry")
 }
 
 // Robots.txt Configuration
@@ -2745,6 +2907,8 @@ model RobotsConfig {
   updatedBy Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("robotsconfig")
 }
 
 // Redirect Manager
@@ -2759,6 +2923,8 @@ model Redirect {
   updatedBy      Int?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+
+  @@map("redirect")
 }
 
 // URL Rewrite
@@ -2771,6 +2937,8 @@ model UrlRewrite {
   updatedBy Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("urlrewrite")
 }
 
 // ============================================================
@@ -2806,20 +2974,22 @@ enum ReportExportStatus {
 }
 
 model ScheduledReport {
-  id          Int                     @id @default(autoincrement())
-  reportCode  String                  @unique
-  reportName  String
-  reportType  String
-  frequency   ReportScheduleFrequency
-  filters     Json?
-  recipients  Json?
-  nextRunAt   DateTime
-  lastRunAt   DateTime?
-  status      ReportScheduleStatus    @default(ACTIVE)
-  createdBy   Int?
-  updatedBy   Int?
-  createdAt   DateTime                @default(now())
-  updatedAt   DateTime                @updatedAt
+  id         Int                     @id @default(autoincrement())
+  reportCode String                  @unique
+  reportName String
+  reportType String
+  frequency  ReportScheduleFrequency
+  filters    Json?
+  recipients Json?
+  nextRunAt  DateTime
+  lastRunAt  DateTime?
+  status     ReportScheduleStatus    @default(ACTIVE)
+  createdBy  Int?
+  updatedBy  Int?
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @updatedAt
+
+  @@map("scheduled_report")
 }
 
 model ReportExportLog {
@@ -2835,24 +3005,28 @@ model ReportExportLog {
   error       String?
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
+
+  @@map("report_export_log")
 }
 
 // Content Version History
 model ContentVersion {
-  id          Int                  @id @default(autoincrement())
-  entityType  String
-  entityId    Int
-  version     Int
-  content     Json
-  status      ContentVersionStatus @default(DRAFT)
-  changedBy   Int?
-  changedAt   DateTime             @default(now())
-  cmsPage     CmsPage?             @relation(fields: [cmsPageId], references: [id])
-  cmsPageId   Int?
-  blogPost    BlogPost?            @relation(fields: [blogPostId], references: [id])
-  blogPostId  Int?
-  policy      Policy?              @relation(fields: [policyId], references: [id])
-  policyId    Int?
+  id         Int                  @id @default(autoincrement())
+  entityType String
+  entityId   Int
+  version    Int
+  content    Json
+  status     ContentVersionStatus @default(DRAFT)
+  changedBy  Int?
+  changedAt  DateTime             @default(now())
+  cmsPage    CmsPage?             @relation(fields: [cmsPageId], references: [id])
+  cmsPageId  Int?
+  blogPost   BlogPost?            @relation(fields: [blogPostId], references: [id])
+  blogPostId Int?
+  policy     Policy?              @relation(fields: [policyId], references: [id])
+  policyId   Int?
+
+  @@map("contentversion")
 }
 
 // ============================================================
@@ -2943,6 +3117,8 @@ model CompanyProfile {
   timezone      String   @default("Asia/Kolkata")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@map("company_profile")
 }
 
 model StoreSettings {
@@ -2962,6 +3138,8 @@ model StoreSettings {
   maintenanceMsg  String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  @@map("store_settings")
 }
 
 model AppSettings {
@@ -2979,6 +3157,8 @@ model AppSettings {
   autoRefund          Boolean  @default(false)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+
+  @@map("app_settings")
 }
 
 model ThemeSettings {
@@ -2993,6 +3173,8 @@ model ThemeSettings {
   customCss      String?  @db.Text
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  @@map("theme_settings")
 }
 
 model SysCurrency {
@@ -3005,6 +3187,8 @@ model SysCurrency {
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  @@map("sys_currency")
 }
 
 model SysLanguage {
@@ -3017,8 +3201,9 @@ model SysLanguage {
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-}
 
+  @@map("sys_language")
+}
 
 model EmailConfiguration {
   id           Int       @id @default(autoincrement())
@@ -3033,6 +3218,8 @@ model EmailConfiguration {
   lastTestedAt DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+
+  @@map("email_configuration")
 }
 
 model SmsConfiguration {
@@ -3043,6 +3230,8 @@ model SmsConfiguration {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("sms_configuration")
 }
 
 model WhatsAppConfiguration {
@@ -3054,6 +3243,8 @@ model WhatsAppConfiguration {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@map("whats_app_configuration")
 }
 
 model PushNotificationConfig {
@@ -3067,6 +3258,8 @@ model PushNotificationConfig {
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+
+  @@map("push_notification_config")
 }
 
 model NotificationTemplate {
@@ -3083,6 +3276,8 @@ model NotificationTemplate {
   updatedBy    Int?
   createdAt    DateTime            @default(now())
   updatedAt    DateTime            @updatedAt
+
+  @@map("notification_template")
 }
 
 model ApiKey {
@@ -3099,6 +3294,8 @@ model ApiKey {
   updatedBy   Int?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+
+  @@map("api_key")
 }
 
 model ThirdPartyIntegration {
@@ -3116,6 +3313,8 @@ model ThirdPartyIntegration {
   updatedBy     Int?
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
+
+  @@map("third_party_integration")
 }
 
 model FeatureFlag {
@@ -3131,6 +3330,8 @@ model FeatureFlag {
   updatedBy      Int?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  @@map("feature_flag")
 }
 
 model SchedulerJob {
@@ -3151,6 +3352,8 @@ model SchedulerJob {
   updatedBy      Int?
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
+
+  @@map("scheduler_job")
 }
 
 model AuditLog {
@@ -3167,6 +3370,8 @@ model AuditLog {
   userAgent  String?
   device     String?
   createdAt  DateTime @default(now())
+
+  @@map("audit_log")
 }
 
 model ActivityLog {
@@ -3180,6 +3385,8 @@ model ActivityLog {
   device       String?
   status       String          @default("SUCCESS")
   createdAt    DateTime        @default(now())
+
+  @@map("activity_log")
 }
 
 model ErrorLog {
@@ -3195,6 +3402,8 @@ model ErrorLog {
   ipAddress     String?
   environment   String?
   createdAt     DateTime @default(now())
+
+  @@map("error_log")
 }
 
 model SecuritySettings {
@@ -3215,6 +3424,8 @@ model SecuritySettings {
   twoFactorEnabled       Boolean  @default(false)
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
+
+  @@map("security_settings")
 }
 
 model BackupRecord {
@@ -3232,6 +3443,8 @@ model BackupRecord {
   createdBy   Int?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+
+  @@map("backup_record")
 }
 
 model FileStorageConfig {
@@ -3250,6 +3463,8 @@ model FileStorageConfig {
   isActive         Boolean  @default(true)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+
+  @@map("file_storage_config")
 }
 
 model LicenseInfo {
@@ -3265,6 +3480,8 @@ model LicenseInfo {
   lastCheckedAt DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@map("license_info")
 }
 
 model SystemVersion {
@@ -3275,6 +3492,8 @@ model SystemVersion {
   changelog   String?  @db.Text
   isLatest    Boolean  @default(false)
   createdAt   DateTime @default(now())
+
+  @@map("system_version")
 }
 
 model EnvironmentConfig {
@@ -3289,4 +3508,6 @@ model EnvironmentConfig {
   updatedBy   Int?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@map("environment_config")
 }
