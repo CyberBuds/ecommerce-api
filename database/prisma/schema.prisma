@@ -2149,7 +2149,7 @@ model Collection {
   createdBy    Int?
   updatedBy    Int?
 
-  @@map("Collection")
+  @@map("collection")
 }
 
 model ProductType {
