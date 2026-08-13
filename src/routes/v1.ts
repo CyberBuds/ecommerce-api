@@ -3,6 +3,7 @@ import healthController from '../controllers/health.controller';
 import authRoutes from './auth.routes';
 import userRoutes from './users.routes';
 import masterRoutes from './master.routes';
+import attributeValueRoutes from './attribute-values.routes';
 import mediaRoutes from './media.routes';
 import productRoutes from './products.routes';
 import inventoryRoutes from './inventory.routes';
@@ -30,6 +31,7 @@ router.use('/users', userRoutes);
 
 // Master data
 router.use('/master', masterRoutes);
+router.use('/master/attributes', attributeValueRoutes);
 
 // Media management
 router.use('/media', mediaRoutes);
