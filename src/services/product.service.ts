@@ -152,7 +152,7 @@ export default class ProductService {
     }
 
     if (tags && tags.length > 0) {
-      await Promise.all(tags.map((tag) => this.repository.createProductTag(product.id, String(tag))));
+      await Promise.all(tags.map((tag) => this.repository.createProductTag(product.id, Number(tag))));
     }
 
     await this.repository.recordAudit(product.id, 'CREATE_PRODUCT', createdBy ?? null, { productCode: product.productCode }, null);
@@ -166,6 +166,11 @@ export default class ProductService {
     }
 
     const payload = this.buildPayload(dto, undefined, updatedBy) as unknown as UpdateProductDto;
+    // The catalog edit form does not support clearing a category. Do not let a
+    // blank or null value overwrite the category already stored for a product.
+    if (payload.categoryId === null || payload.categoryId === undefined) {
+      delete (payload as Partial<UpdateProductDto>).categoryId;
+    }
     await this.assertUnique(payload, id);
 
     const { variants, images, attributes, tags, categories: _categories, relations: _relations, ...productData } = payload;
@@ -188,7 +193,7 @@ export default class ProductService {
 
     if (tags) {
       await this.repository.deleteProductTags(id);
-      await Promise.all(tags.map((tag) => this.repository.createProductTag(id, String(tag))));
+      await Promise.all(tags.map((tag) => this.repository.createProductTag(id, Number(tag))));
     }
 
     if (attributes) {
@@ -326,7 +331,7 @@ export default class ProductService {
     await Promise.all(source.attributes.map((attribute: any) =>
       this.repository.createAttributes(duplicateProduct.id, [{ attributeKey: attribute.attributeKey, attributeValue: attribute.attributeValue }])
     ));
-    await Promise.all(source.tags.map((tag: any) => this.repository.createProductTag(duplicateProduct.id, tag.name)));
+    await Promise.all(source.tags.map((tag: any) => this.repository.createProductTag(duplicateProduct.id, tag.tagId)));
     await this.repository.recordAudit(productId, 'DUPLICATE_PRODUCT', null, { duplicatedId: duplicateProduct.id }, source as any);
     return this.repository.findById(duplicateProduct.id);
   }

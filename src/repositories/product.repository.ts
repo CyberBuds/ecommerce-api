@@ -187,8 +187,8 @@ export default class ProductRepository {
     return db.productMedia.deleteMany({ where: { productId } });
   }
 
-  async createProductTag(productId: number, name: string) {
-    return db.productTag.create({ data: { productId, name } });
+  async createProductTag(productId: number, tagId: number) {
+    return db.productTag.create({ data: { productId, tagId } });
   }
 
   async deleteProductTags(productId: number) {
