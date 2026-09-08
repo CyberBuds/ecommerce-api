@@ -24,7 +24,34 @@ app.use((req, _res, next) => {
 
 // Security and performance middlewares
 app.use(helmet());
-app.use(cors({ origin: config.CORS_ORIGIN ? config.CORS_ORIGIN.split(',') : true }));
+
+const configuredCorsOrigins = (config.CORS_ORIGIN || '')
+  .split(',')
+  .map((origin) => origin.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+const allowedCorsOrigins = new Set([
+  ...configuredCorsOrigins,
+  'https://vastra-commerce.vercel.app',
+]);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedCorsOrigins.has(origin.replace(/\/$/, ''))) {
+      return callback(null, true);
+    }
+    return callback(new Error('Origin is not allowed by CORS'));
+  },
+  credentials: true,
+}));
+app.options('*', cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedCorsOrigins.has(origin.replace(/\/$/, ''))) {
+      return callback(null, true);
+    }
+    return callback(new Error('Origin is not allowed by CORS'));
+  },
+  credentials: true,
+}));
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
