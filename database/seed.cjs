@@ -1,17 +1,11 @@
-const { PrismaClient } = require('../apps/api/src/prisma');
-const crypto = require('crypto');
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
-function hashPassword(password) {
-  const salt = crypto.randomBytes(16).toString('hex');
-  const derived = crypto.scryptSync(password, salt, 64).toString('hex');
-  return `${salt}:${derived}`;
-}
-
 async function main() {
   const password = 'Admin@123';
-  const hashed = hashPassword(password);
+  const hashed = await bcrypt.hash(password, 10);
 
   // Create roles
   const superAdmin = await prisma.role.upsert({
@@ -20,19 +14,23 @@ async function main() {
     create: { name: 'Super Admin', description: 'Super Administrator with full access' },
   });
 
-  const admin = await prisma.role.upsert({
+  await prisma.role.upsert({
     where: { name: 'Admin' },
     update: {},
     create: { name: 'Admin', description: 'Administrator' },
   });
 
-  // Create a few permissions (example subset)
   const permissions = [
-    { resource: 'Users', action: 'VIEW' },
-    { resource: 'Users', action: 'CREATE' },
-    { resource: 'Roles', action: 'VIEW' },
-    { resource: 'Roles', action: 'CREATE' },
-  ];
+    'Dashboard', 'Catalog', 'Inventory', 'Customers', 'Orders',
+    'Payments', 'Marketing', 'Reports', 'CMS', 'System', 'Administration',
+    'Users', 'Roles',
+  ].flatMap((resource) => [
+    { resource, action: 'VIEW' },
+    { resource, action: 'CREATE' },
+    { resource, action: 'UPDATE' },
+    { resource, action: 'DELETE' },
+    { resource, action: 'EXPORT' },
+  ]);
 
   for (const p of permissions) {
     await prisma.permission.upsert({
@@ -52,7 +50,7 @@ async function main() {
     });
   }
 
-  // Create super admin user
+  // Create or refresh super admin credentials
   const existing = await prisma.user.findUnique({ where: { email: 'superadmin@example.com' } });
   if (!existing) {
     await prisma.user.create({
@@ -62,6 +60,17 @@ async function main() {
         email: 'superadmin@example.com',
         password: hashed,
         roleId: superAdmin.id,
+      },
+    });
+  } else {
+    await prisma.user.update({
+      where: { id: existing.id },
+      data: {
+        password: hashed,
+        roleId: superAdmin.id,
+        status: 'ACTIVE',
+        isActive: true,
+        isLocked: false,
       },
     });
   }
