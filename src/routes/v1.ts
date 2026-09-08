@@ -2,6 +2,7 @@ import { Router } from 'express';
 import healthController from '../controllers/health.controller';
 import authRoutes from './auth.routes';
 import userRoutes from './users.routes';
+import roleRoutes from './roles.routes';
 import masterRoutes from './master.routes';
 import attributeValueRoutes from './attribute-values.routes';
 import mediaRoutes from './media.routes';
@@ -28,6 +29,7 @@ router.use('/auth', authRoutes);
 
 // User management
 router.use('/users', userRoutes);
+router.use('/roles', roleRoutes);
 
 // Master data
 router.use('/master', masterRoutes);
