@@ -17,6 +17,7 @@ import marketingRoutes from './marketing.routes';
 import cmsRoutes from './cms.routes';
 import reportsRoutes from './reports.routes';
 import sysadminRoutes from './sysadmin.routes';
+import storefrontRoutes from './storefront.routes';
 import { collectRoutes, RouteInfo } from '../utils/routeUtils';
 
 const router = Router();
@@ -40,6 +41,9 @@ router.use('/media', mediaRoutes);
 
 // Product management
 router.use('/products', productRoutes);
+
+// Public read-only catalogue for the customer storefront.
+router.use('/storefront', storefrontRoutes);
 
 // Inventory and warehouse management
 router.use('/inventory', inventoryRoutes);
