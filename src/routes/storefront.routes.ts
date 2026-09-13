@@ -131,8 +131,8 @@ router.post('/checkout', authenticate, async (req, res, next) => {
     });
 
     const cart = await db.cart.findUnique({ where: { sessionId: String(sessionId) } });
-    if (!cart) {
-      return apiResponse.badRequest(res, null, 'Cart not found');
+    if (!cart || cart.status !== 'ACTIVE') {
+      return apiResponse.badRequest(res, null, 'Cart is no longer active. Please add your items again before checkout.');
     }
 
     const order = await orderService.create({
@@ -144,6 +144,11 @@ router.post('/checkout', authenticate, async (req, res, next) => {
       orderType: 'ONLINE',
       orderSource: 'WEB'
     });
+
+    // A completed cart must never be reused by a later checkout. The storefront
+    // creates a fresh session client-side, and clearing this server-side mapping
+    // also protects against a stale browser session or direct API request.
+    await db.cart.update({ where: { id: cart.id }, data: { sessionId: null } });
 
     return apiResponse.created(res, order, 'COD order created successfully');
   } catch (error) {
