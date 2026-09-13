@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { body } from 'express-validator';
 import authenticate from '../middlewares/authenticate';
 import authorize from '../middlewares/authorize';
 import validate from '../middlewares/validation.middleware';
@@ -36,6 +37,29 @@ const router = Router();
 const repository = new CustomerRepository();
 const service = new CustomerService(repository, new ProductRepository());
 const controller = createCustomerController(service);
+
+router.post(
+  '/register',
+  [
+    body('firstName').notEmpty().withMessage('First name is required'),
+    body('lastName').notEmpty().withMessage('Last name is required'),
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('mobile').optional().isMobilePhone('any').withMessage('Valid mobile number is required')
+  ],
+  validate,
+  controller.register
+);
+
+router.post(
+  '/login',
+  [
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+  ],
+  validate,
+  controller.login
+);
 
 /**
  * @openapi

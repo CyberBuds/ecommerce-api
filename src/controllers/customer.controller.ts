@@ -15,6 +15,27 @@ export default function createCustomerController(service: CustomerService) {
       }
     },
 
+    register: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const dto = req.body;
+        await service.register(dto);
+        const result = await service.login(dto.email, dto.password);
+        return apiResponse.created(res, result, 'Customer registered successfully');
+      } catch (error) {
+        next(error);
+      }
+    },
+
+    login: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { email, password } = req.body;
+        const result = await service.login(email, password);
+        return apiResponse.success(res, result, 'Login successful');
+      } catch (error) {
+        next(error);
+      }
+    },
+
     update: async (req: Request, res: Response, next: NextFunction) => {
       try {
         const id = Number(req.params.id);

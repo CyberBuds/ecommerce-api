@@ -183,6 +183,7 @@ model Customer {
   lastName                String
   email                   String                      @unique
   mobile                  String?                     @unique
+  password                String?                     @default("")
   gender                  Gender?
   dateOfBirth             DateTime?
   anniversaryDate         DateTime?

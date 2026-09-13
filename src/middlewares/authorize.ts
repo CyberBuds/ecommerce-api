@@ -11,6 +11,10 @@ export default function authorize(options: { roles?: string[]; permission?: { re
 
     // role-based
     if (options.roles && options.roles.length > 0) {
+      if (typeof user.role === 'string' && options.roles.includes(user.role)) {
+        return next();
+      }
+
       const role = await prisma.role.findUnique({ where: { id: user.roleId } });
       if (!role || !options.roles.includes(role.name)) {
         throw new AppError('Forbidden', HTTP_STATUS.FORBIDDEN, 'FORBIDDEN');

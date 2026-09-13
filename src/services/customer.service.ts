@@ -2,6 +2,8 @@ import AppError from '../utils/AppError';
 import HTTP_STATUS from '../constants/httpStatus';
 import CustomerRepository from '../repositories/customer.repository';
 import ProductRepository from '../repositories/product.repository';
+import { comparePassword, hashPassword } from '../utils/password';
+import { signAccessToken, signRefreshToken } from '../utils/jwt';
 import {
   CreateCustomerDto,
   UpdateCustomerDto,
@@ -29,6 +31,80 @@ import {
 
 export default class CustomerService {
   constructor(private repository: CustomerRepository, private productRepository: ProductRepository) {}
+
+  private createCustomerCode() {
+    return `CUST-${Date.now()}-${Math.floor(Math.random() * 9000 + 1000)}`;
+  }
+
+  private sanitizeCustomer(customer: any) {
+    if (!customer) return customer;
+    const { password, ...rest } = customer;
+    return rest;
+  }
+
+  async register(dto: Partial<CreateCustomerDto> & { password?: string }, createdBy?: number) {
+    const email = String(dto.email || '').trim().toLowerCase();
+    const firstName = String(dto.firstName || '').trim();
+    const lastName = String(dto.lastName || '').trim();
+    const password = String(dto.password || '').trim();
+
+    if (!firstName || !lastName) {
+      throw new AppError('First name and last name are required', HTTP_STATUS.BAD_REQUEST, 'INVALID_NAME');
+    }
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new AppError('Valid email is required', HTTP_STATUS.BAD_REQUEST, 'INVALID_EMAIL');
+    }
+
+    if (!password || password.length < 6) {
+      throw new AppError('Password must be at least 6 characters', HTTP_STATUS.BAD_REQUEST, 'INVALID_PASSWORD');
+    }
+
+    const customerData = {
+      customerCode: dto.customerCode || this.createCustomerCode(),
+      firstName,
+      lastName,
+      email,
+      mobile: dto.mobile ? String(dto.mobile).trim() : undefined,
+      gender: dto.gender,
+      status: dto.status || 'ACTIVE',
+      isEmailVerified: dto.isEmailVerified ?? false,
+      isMobileVerified: dto.isMobileVerified ?? false,
+      password: await hashPassword(password),
+      createdBy,
+      updatedBy: createdBy
+    };
+
+    await this.assertUnique({ email, mobile: customerData.mobile, customerCode: customerData.customerCode });
+
+    const created = await this.repository.create(customerData);
+    return this.sanitizeCustomer(created);
+  }
+
+  async login(email: string, password: string) {
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const customer = await this.repository.findByEmail(normalizedEmail);
+
+    if (!customer || !customer.password) {
+      throw new AppError('Invalid credentials', HTTP_STATUS.UNAUTHORIZED, 'INVALID_CREDENTIALS');
+    }
+
+    const valid = await comparePassword(password, customer.password);
+    if (!valid) {
+      throw new AppError('Invalid credentials', HTTP_STATUS.UNAUTHORIZED, 'INVALID_CREDENTIALS');
+    }
+
+    const accessToken = signAccessToken({ sub: customer.id, role: 'Customer' });
+    const refreshToken = signRefreshToken({ sub: customer.id, role: 'Customer' });
+
+    await this.repository.update(customer.id, { lastLogin: new Date() } as any);
+
+    return {
+      accessToken,
+      refreshToken,
+      customer: this.sanitizeCustomer(customer)
+    };
+  }
 
   private async assertUnique(dto: Partial<CreateCustomerDto> | Partial<UpdateCustomerDto>, excludeId?: number) {
     if (dto.email) {
