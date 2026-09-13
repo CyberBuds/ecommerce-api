@@ -18,8 +18,7 @@ export default function createOrderController(service: OrderService) {
     listOrders: async (req: Request, res: Response, next: NextFunction) => {
       try {
         const query = req.query as any;
-        const currentCustomerId = (req as any).user?.sub ? Number((req as any).user.sub) : undefined;
-        const orders = await service.list(query, currentCustomerId);
+        const orders = await service.list(query);
         return apiResponse.success(res, orders, 'Orders fetched successfully');
       } catch (error) {
         next(error);

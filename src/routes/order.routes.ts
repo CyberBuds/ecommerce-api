@@ -7,6 +7,7 @@ import ProductRepository from '../repositories/product.repository';
 import CustomerRepository from '../repositories/customer.repository';
 import OrderService from '../services/order.service';
 import authenticate from '../middlewares/authenticate';
+import authorize from '../middlewares/authorize';
 import validate from '../middlewares/validation.middleware';
 import {
   createOrderValidation,
@@ -99,7 +100,7 @@ router.post('/', createOrderValidation, validate, controller.createOrder);
  *       401:
  *         description: Unauthorized
  */
-router.get('/', listOrdersValidation, validate, controller.listOrders);
+router.get('/', authorize({ roles: ['Super Admin', 'Admin'] }), listOrdersValidation, validate, controller.listOrders);
 
 /**
  * @openapi
