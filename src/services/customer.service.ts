@@ -194,6 +194,29 @@ export default class CustomerService {
     return this.repository.listAddresses(customerId);
   }
 
+  async getProfileAddress(customerId: number) {
+    const addresses = await this.listAddresses(customerId);
+    return addresses.find((address: any) => address.isDefaultShipping) ?? addresses[0] ?? null;
+  }
+
+  async saveProfileAddress(customerId: number, dto: CreateCustomerAddressDto) {
+    await this.ensureCustomerExists(customerId);
+    const existingAddress = await this.getProfileAddress(customerId);
+    const data = {
+      ...dto,
+      addressType: 'SHIPPING' as const,
+      isDefaultShipping: true,
+      isDefaultBilling: true,
+      updatedBy: customerId
+    };
+
+    if (existingAddress) {
+      return this.repository.updateAddress(existingAddress.id, data);
+    }
+
+    return this.repository.createAddress(customerId, { ...data, createdBy: customerId });
+  }
+
   async createGroup(dto: CreateCustomerGroupDto, createdBy?: number) {
     return this.repository.createGroup({ ...dto, createdBy, updatedBy: createdBy });
   }

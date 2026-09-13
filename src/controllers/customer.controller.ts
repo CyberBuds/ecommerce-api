@@ -99,6 +99,26 @@ export default function createCustomerController(service: CustomerService) {
       }
     },
 
+    getProfileAddress: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const customerId = Number((req as any).user?.sub);
+        const address = await service.getProfileAddress(customerId);
+        return apiResponse.success(res, address, 'Customer profile address fetched');
+      } catch (error) {
+        next(error);
+      }
+    },
+
+    saveProfileAddress: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const customerId = Number((req as any).user?.sub);
+        const address = await service.saveProfileAddress(customerId, req.body);
+        return apiResponse.success(res, address, 'Customer profile address saved');
+      } catch (error) {
+        next(error);
+      }
+    },
+
     createAddress: async (req: Request, res: Response, next: NextFunction) => {
       try {
         const customerId = Number(req.params.id);

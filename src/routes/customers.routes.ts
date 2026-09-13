@@ -516,6 +516,9 @@ router.get('/profile', authenticate, authorize({ roles: ['Customer', 'Admin', 'S
  */
 router.put('/profile', authenticate, authorize({ roles: ['Customer', 'Admin', 'Super Admin'] }), customerProfileValidation, validate, controller.updateProfile);
 
+router.get('/profile/address', authenticate, authorize({ roles: ['Customer', 'Admin', 'Super Admin'] }), controller.getProfileAddress);
+router.put('/profile/address', authenticate, authorize({ roles: ['Customer', 'Admin', 'Super Admin'] }), customerAddressValidation, validate, controller.saveProfileAddress);
+
 /**
  * @openapi
  * /api/v1/customers/{id}:
