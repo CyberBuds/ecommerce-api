@@ -28,8 +28,7 @@ export default function createOrderController(service: OrderService) {
     getOrder: async (req: Request, res: Response, next: NextFunction) => {
       try {
         const id = Number(req.params.id);
-        const currentCustomerId = (req as any).user?.sub ? Number((req as any).user.sub) : undefined;
-        const order = await service.getById(id, currentCustomerId);
+        const order = await service.getById(id);
         return apiResponse.success(res, order, 'Order fetched successfully');
       } catch (error) {
         next(error);

@@ -74,7 +74,20 @@ export default class OrderRepository {
     const orderBy = { [sortBy]: query.sortOrder === 'desc' ? 'desc' : 'asc' } as Record<string, 'asc' | 'desc'>;
 
     const [items, total] = await Promise.all([
-      db.order.findMany({ where, include: { customer: true, billingAddress: true, shippingAddress: true }, orderBy, skip, take: pageSize }),
+      db.order.findMany({
+        where,
+        include: {
+          customer: true,
+          billingAddress: true,
+          shippingAddress: true,
+          shippingMethod: true,
+          items: { include: { product: true, variant: true } },
+          timeline: true
+        },
+        orderBy,
+        skip,
+        take: pageSize
+      }),
       db.order.count({ where })
     ]);
 

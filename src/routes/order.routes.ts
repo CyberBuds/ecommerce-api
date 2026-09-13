@@ -126,7 +126,7 @@ router.get('/', authorize({ roles: ['Super Admin', 'Admin'] }), listOrdersValida
  *       404:
  *         description: Order not found
  */
-router.get('/:id', orderIdParam, validate, controller.getOrder);
+router.get('/:id', authorize({ roles: ['Super Admin', 'Admin'] }), orderIdParam, validate, controller.getOrder);
 
 /**
  * @openapi
