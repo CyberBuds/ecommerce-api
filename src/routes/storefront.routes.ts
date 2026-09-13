@@ -151,6 +151,24 @@ router.post('/checkout', authenticate, async (req, res, next) => {
   }
 });
 
+router.get('/orders', authenticate, async (req, res, next) => {
+  try {
+    const customerId = Number((req as any).user?.sub);
+    if (!Number.isInteger(customerId) || customerId <= 0) {
+      return apiResponse.unauthorized(res, null, 'Please log in to view your orders.');
+    }
+
+    const orders = await db.order.findMany({
+      where: { customerId },
+      include: { items: true, shippingAddress: true },
+      orderBy: { orderDate: 'desc' }
+    });
+    return apiResponse.success(res, orders, 'Customer orders fetched');
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get('/orders/track/:orderNumber', async (req, res, next) => {
   try {
     const orderNumber = String(req.params.orderNumber).trim();
