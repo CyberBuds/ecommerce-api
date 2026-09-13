@@ -7,6 +7,7 @@ import InventoryRepository from '../repositories/inventory.repository';
 import ProductRepository from '../repositories/product.repository';
 import CustomerRepository from '../repositories/customer.repository';
 import OrderService from '../services/order.service';
+import authenticate from '../middlewares/authenticate';
 
 const router = Router();
 const db = prisma as any;
@@ -89,7 +90,7 @@ router.get('/products', async (req, res, next) => {
   }
 });
 
-router.post('/checkout', async (req, res, next) => {
+router.post('/checkout', authenticate, async (req, res, next) => {
   try {
     const { sessionId, name, email, phone, address, city, state, pincode, paymentMethod } = req.body;
     if (!sessionId || !name || !email || !phone || !address || !city || !state || !pincode) {
@@ -99,23 +100,20 @@ router.post('/checkout', async (req, res, next) => {
       return apiResponse.badRequest(res, null, 'Only cash on delivery is currently available');
     }
 
+    const customerId = Number((req as any).user?.sub);
+    const customer = Number.isInteger(customerId) && customerId > 0
+      ? await db.customer.findUnique({ where: { id: customerId } })
+      : null;
+    if (!customer) {
+      return apiResponse.unauthorized(res, null, 'Please log in to your account to proceed with checkout.');
+    }
+
     const nameParts = String(name).trim().split(/\s+/);
-    const firstName = nameParts.shift() || 'Guest';
-    const lastName = nameParts.join(' ') || 'Customer';
-    const normalizedEmail = String(email).trim().toLowerCase();
-    const normalizedPhone = String(phone).trim();
-    const customer = await db.customer.upsert({
-      where: { email: normalizedEmail },
-      update: { firstName, lastName, mobile: normalizedPhone },
-      create: {
-        customerCode: `WEB-${Date.now()}`,
-        firstName,
-        lastName,
-        email: normalizedEmail,
-        mobile: normalizedPhone,
-        isEmailVerified: false,
-        isMobileVerified: false
-      }
+    const firstName = nameParts.shift() || customer.firstName;
+    const lastName = nameParts.join(' ') || customer.lastName;
+    await db.customer.update({
+      where: { id: customer.id },
+      data: { firstName, lastName, mobile: String(phone).trim() }
     });
 
     const customerAddress = await db.customerAddress.create({

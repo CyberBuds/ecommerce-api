@@ -6,6 +6,7 @@ import ProductRepository from '../repositories/product.repository';
 import InventoryRepository from '../repositories/inventory.repository';
 import CustomerRepository from '../repositories/customer.repository';
 import ShippingService from '../services/shipping.service';
+import authenticate from '../middlewares/authenticate';
 import optionalAuthenticate from '../middlewares/optionalAuthenticate';
 import validate from '../middlewares/validation.middleware';
 import {
@@ -545,6 +546,6 @@ router.get('/shipping', controller.estimateShipping);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/checkout', checkoutValidation, validate, controller.checkout);
+router.post('/checkout', authenticate, checkoutValidation, validate, controller.checkout);
 
 export default router;

@@ -204,6 +204,10 @@ export default class CartService {
   }
 
   async checkout(customerId: number | undefined, sessionId: string | undefined, dto: CheckoutDto) {
+    if (!customerId) {
+      throw new AppError('Please log in to your account to proceed with checkout.', HTTP_STATUS.UNAUTHORIZED, 'AUTH_REQUIRED');
+    }
+
     const cart = await this.getCart(customerId, sessionId);
     if (!cart || !cart.id || !cart.items || cart.items.length === 0) {
       throw new AppError('Cart is empty', HTTP_STATUS.BAD_REQUEST, 'CART_EMPTY');
