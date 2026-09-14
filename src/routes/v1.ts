@@ -18,6 +18,7 @@ import cmsRoutes from './cms.routes';
 import reportsRoutes from './reports.routes';
 import sysadminRoutes from './sysadmin.routes';
 import storefrontRoutes from './storefront.routes';
+import invoiceRoutes from './invoice.routes';
 import { collectRoutes, RouteInfo } from '../utils/routeUtils';
 
 const router = Router();
@@ -57,6 +58,9 @@ router.use('/', shippingRoutes);
 
 // Order management
 router.use('/orders', orderRoutes);
+
+// Invoice management
+router.use('/invoices', invoiceRoutes);
 
 // Payment and billing
 router.use('/payments', paymentRoutes);
