@@ -37,12 +37,26 @@ export default class MasterRepository {
     return this.getModel().findFirst({ where });
   }
 
+  private normalizeRelationPayload(data: Record<string, unknown>) {
+    const payload = { ...data };
+
+    if ('groupId' in payload && payload.groupId !== undefined && payload.groupId !== null) {
+      const groupId = Number(payload.groupId);
+      delete payload.groupId;
+      payload.group = {
+        connect: { id: groupId }
+      };
+    }
+
+    return payload;
+  }
+
   async create(data: Record<string, unknown>) {
-    return this.getModel().create({ data });
+    return this.getModel().create({ data: this.normalizeRelationPayload(data) });
   }
 
   async update(id: number, data: Record<string, unknown>) {
-    return this.getModel().update({ where: { id }, data });
+    return this.getModel().update({ where: { id }, data: this.normalizeRelationPayload(data) });
   }
 
   async softDelete(id: number, updatedBy?: number) {
