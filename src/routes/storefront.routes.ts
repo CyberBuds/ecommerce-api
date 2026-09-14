@@ -11,6 +11,28 @@ import authenticate from '../middlewares/authenticate';
 
 const router = Router();
 const db = prisma as any;
+
+export async function resolveCheckoutCart(database: any, customer: { id?: number } | null, sessionId?: string) {
+  const customerId = Number(customer?.id);
+
+  if (Number.isInteger(customerId) && customerId > 0) {
+    const customerCart = await database.cart.findFirst({
+      where: { customerId, status: 'ACTIVE' }
+    });
+    if (customerCart) {
+      return customerCart;
+    }
+  }
+
+  if (sessionId) {
+    return database.cart.findUnique({
+      where: { sessionId: String(sessionId) }
+    });
+  }
+
+  return null;
+}
+
 const orderService = new OrderService(
   new OrderRepository(),
   new CartRepository(),
@@ -130,7 +152,7 @@ router.post('/checkout', authenticate, async (req, res, next) => {
       }
     });
 
-    const cart = await db.cart.findUnique({ where: { sessionId: String(sessionId) } });
+    const cart = await resolveCheckoutCart(db, customer, sessionId);
     if (!cart || cart.status !== 'ACTIVE') {
       return apiResponse.badRequest(res, null, 'Cart is no longer active. Please add your items again before checkout.');
     }
