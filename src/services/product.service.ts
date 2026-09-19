@@ -133,50 +133,68 @@ export default class ProductService {
     }));
   }
 
+  private async ensureProductInventory(productId: number, initialStock?: number, minStock?: number, warehouseId?: number) {
+    if (!this.inventoryRepository) return;
+
+    const normalizedInitial = initialStock !== undefined ? Number(initialStock) : undefined;
+    const normalizedMin = minStock !== undefined ? Number(minStock) : undefined;
+    const hasInventoryInput = normalizedInitial !== undefined || normalizedMin !== undefined || (warehouseId !== undefined && warehouseId > 0);
+
+    if (!hasInventoryInput) return;
+
+    let targetWarehouseId = warehouseId && warehouseId > 0 ? warehouseId : (await this.inventoryRepository.findFirstWarehouse())?.id;
+    if (!targetWarehouseId) {
+      const defaultWarehouse = await this.inventoryRepository.createWarehouse({
+        warehouseCode: `WH-${productId}`,
+        warehouseName: 'Main Warehouse',
+        status: 'ACTIVE',
+        contactPerson: 'Operations',
+        address: 'Default inventory hub',
+        city: 'Bengaluru',
+        country: 'India'
+      });
+      targetWarehouseId = defaultWarehouse.id;
+    }
+
+    if (!targetWarehouseId) return;
+
+    const existingInventory = await this.inventoryRepository.findInventoryRecord(productId, null, targetWarehouseId);
+    const currentStock = normalizedInitial !== undefined ? Math.max(0, normalizedInitial) : existingInventory?.currentStock ?? 0;
+    const minimumStock = normalizedMin !== undefined ? Math.max(0, normalizedMin) : existingInventory?.minimumStock ?? 0;
+
+    if (existingInventory) {
+      const availableStock = Math.max(0, currentStock - (existingInventory.reservedStock ?? 0));
+      await this.inventoryRepository.updateInventory(existingInventory.id, {
+        currentStock,
+        availableStock,
+        minimumStock,
+        status: currentStock > 0 ? 'ACTIVE' : 'OUT_OF_STOCK'
+      });
+      return;
+    }
+
+    await this.inventoryRepository.createInventory({
+      productId,
+      variantId: null,
+      warehouseId: targetWarehouseId,
+      currentStock,
+      reservedStock: 0,
+      availableStock: currentStock,
+      minimumStock,
+      maximumStock: 0,
+      reorderLevel: 0,
+      status: currentStock > 0 ? 'ACTIVE' : 'OUT_OF_STOCK'
+    });
+  }
+
   async create(dto: CreateProductDto, createdBy?: number) {
     const payload = this.buildPayload(dto, createdBy) as unknown as CreateProductDto;
     await this.assertUnique(payload);
 
-    const { variants, images, attributes, tags, categories: _categories, relations: _relations, ...productData } = payload;
+    const { variants, images, attributes, tags, categories: _categories, relations: _relations, initialStock, minStock, warehouseId, ...productData } = payload;
     const product = await this.repository.create(productData as Record<string, unknown>);
 
-    const initialStock = Number(payload.initialStock ?? 0);
-    const minStock = Number(payload.minStock ?? 0);
-    const warehouseId = payload.warehouseId ?? 0;
-
-    if (this.inventoryRepository && (initialStock > 0 || warehouseId > 0 || payload.minStock !== undefined)) {
-      let targetWarehouseId = warehouseId > 0 ? warehouseId : (await this.inventoryRepository.findFirstWarehouse())?.id;
-      if (!targetWarehouseId) {
-        const defaultWarehouse = await this.inventoryRepository.createWarehouse({
-          warehouseCode: 'WH-DEFAULT',
-          warehouseName: 'Main Warehouse',
-          status: 'ACTIVE',
-          contactPerson: 'Operations',
-          address: 'Default inventory hub',
-          city: 'Bengaluru',
-          country: 'India'
-        });
-        targetWarehouseId = defaultWarehouse.id;
-      }
-
-      if (targetWarehouseId) {
-        const existingInventory = await this.inventoryRepository.findInventoryRecord(product.id, null, targetWarehouseId);
-        if (!existingInventory) {
-          await this.inventoryRepository.createInventory({
-            productId: product.id,
-            variantId: null,
-            warehouseId: targetWarehouseId,
-            currentStock: initialStock,
-            reservedStock: 0,
-            availableStock: initialStock,
-            minimumStock: minStock,
-            maximumStock: 0,
-            reorderLevel: 0,
-            status: initialStock > 0 ? 'ACTIVE' : 'OUT_OF_STOCK'
-          });
-        }
-      }
-    }
+    await this.ensureProductInventory(product.id, initialStock, minStock, warehouseId);
 
     if (variants && variants.length > 0) {
       await Promise.all(variants.map((variant) => this.repository.createVariant(product.id, toRecord(variant))));
@@ -212,8 +230,10 @@ export default class ProductService {
     }
     await this.assertUnique(payload, id);
 
-    const { variants, images, attributes, tags, categories: _categories, relations: _relations, ...productData } = payload;
+    const { variants, images, attributes, tags, categories: _categories, relations: _relations, initialStock, minStock, warehouseId, ...productData } = payload;
     const updated = await this.repository.update(id, productData as Record<string, unknown>);
+
+    await this.ensureProductInventory(id, initialStock, minStock, warehouseId);
 
     if (variants) {
       await Promise.all(variants.map((variant) => {
