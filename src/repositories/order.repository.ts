@@ -114,8 +114,26 @@ export default class OrderRepository {
     return db.orderTimeline.create({ data });
   }
 
+  async findAllShipments() {
+    return db.shipment.findMany({
+      include: {
+        order: { include: { customer: true } },
+        items: { include: { orderItem: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  async findShipmentById(id: number) {
+    return db.shipment.findUnique({ where: { id }, include: { order: { include: { customer: true } }, items: { include: { orderItem: true } } } });
+  }
+
   async createShipment(data: Record<string, unknown>) {
     return db.shipment.create({ data, include: { items: true } });
+  }
+
+  async updateShipment(id: number, data: Record<string, unknown>) {
+    return db.shipment.update({ where: { id }, data, include: { items: true } });
   }
 
   async createShipmentItem(data: Record<string, unknown>) {

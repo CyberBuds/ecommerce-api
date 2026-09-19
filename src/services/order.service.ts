@@ -374,12 +374,128 @@ export default class OrderService {
     return invoice;
   }
 
+  async listShipments() {
+    return this.repository.findAllShipments();
+  }
+
   async getShipments(id: number) {
     const order = await this.repository.findOrderById(id);
     if (!order) {
       throw new AppError('Order not found', HTTP_STATUS.NOT_FOUND, 'ORDER_NOT_FOUND');
     }
     return this.repository.findShipmentByOrderId(order.id);
+  }
+
+  async startPicking(id: number) {
+    const order = await this.repository.findOrderById(id);
+    if (!order) {
+      throw new AppError('Order not found', HTTP_STATUS.NOT_FOUND, 'ORDER_NOT_FOUND');
+    }
+    const updated = await this.repository.updateOrder(id, {
+      orderStatus: 'PROCESSING',
+      fulfillmentStatus: 'PROCESSING',
+      updatedAt: new Date()
+    });
+    await this.repository.createTimelineEvent({
+      orderId: id,
+      eventType: 'ORDER_CONFIRMED',
+      description: 'Picking sheet generated and order moved into fulfillment workflow.'
+    });
+    return updated;
+  }
+
+  async updateItemPicking(orderId: number, itemId: number, status: string) {
+    const order = await this.repository.findOrderById(orderId);
+    if (!order) {
+      throw new AppError('Order not found', HTTP_STATUS.NOT_FOUND, 'ORDER_NOT_FOUND');
+    }
+    const item = order.items.find((entry: any) => entry.id === itemId);
+    if (!item) {
+      throw new AppError('Order item not found', HTTP_STATUS.NOT_FOUND, 'ORDER_ITEM_NOT_FOUND');
+    }
+    const payload = { orderStatus: 'PROCESSING', fulfillmentStatus: 'PROCESSING', updatedAt: new Date() };
+    await this.repository.updateOrder(orderId, payload);
+    return { ...order, items: order.items.map((entry: any) => entry.id === itemId ? { ...entry, pickingStatus: status } : entry) };
+  }
+
+  async completePicking(id: number) {
+    const order = await this.repository.findOrderById(id);
+    if (!order) {
+      throw new AppError('Order not found', HTTP_STATUS.NOT_FOUND, 'ORDER_NOT_FOUND');
+    }
+    const updated = await this.repository.updateOrder(id, {
+      orderStatus: 'PACKING',
+      fulfillmentStatus: 'PROCESSING',
+      updatedAt: new Date()
+    });
+    await this.repository.createTimelineEvent({
+      orderId: id,
+      eventType: 'ORDER_SHIPPED',
+      description: 'Picking audit completed and order handed to packing.'
+    });
+    return updated;
+  }
+
+  async updateItemPacking(orderId: number, itemId: number, status: string) {
+    const order = await this.repository.findOrderById(orderId);
+    if (!order) {
+      throw new AppError('Order not found', HTTP_STATUS.NOT_FOUND, 'ORDER_NOT_FOUND');
+    }
+    const item = order.items.find((entry: any) => entry.id === itemId);
+    if (!item) {
+      throw new AppError('Order item not found', HTTP_STATUS.NOT_FOUND, 'ORDER_ITEM_NOT_FOUND');
+    }
+    await this.repository.updateOrder(orderId, { orderStatus: 'PACKING', updatedAt: new Date() });
+    return { ...order, items: order.items.map((entry: any) => entry.id === itemId ? { ...entry, packingStatus: status } : entry) };
+  }
+
+  async completePacking(id: number) {
+    const order = await this.repository.findOrderById(id);
+    if (!order) {
+      throw new AppError('Order not found', HTTP_STATUS.NOT_FOUND, 'ORDER_NOT_FOUND');
+    }
+    const updated = await this.repository.updateOrder(id, {
+      orderStatus: 'READY_TO_SHIP',
+      fulfillmentStatus: 'SHIPPED',
+      updatedAt: new Date()
+    });
+    await this.repository.createTimelineEvent({
+      orderId: id,
+      eventType: 'ORDER_SHIPPED',
+      description: 'Packing completed and order is ready for dispatch.'
+    });
+    return updated;
+  }
+
+  async createShipment(orderId: number, dto: Record<string, unknown>) {
+    const order = await this.repository.findOrderById(orderId);
+    if (!order) {
+      throw new AppError('Order not found', HTTP_STATUS.NOT_FOUND, 'ORDER_NOT_FOUND');
+    }
+    return this.repository.createShipment({
+      shipmentNumber: `SHP-${Date.now()}`,
+      orderId,
+      carrierName: String(dto.carrier || 'Standard Courier'),
+      trackingNumber: String(dto.trackingNumber || `TRK-${Date.now()}`),
+      trackingUrl: dto.trackingUrl ? String(dto.trackingUrl) : null,
+      shippingCost: Number(dto.shippingCost || 0),
+      status: 'PENDING',
+      dispatchDate: new Date(),
+      estimatedDeliveryDate: dto.estimatedDeliveryDate ? new Date(String(dto.estimatedDeliveryDate)) : null,
+      items: { create: Array.isArray(dto.items) ? (dto.items as any[]).map((item) => ({
+        orderItemId: Number(item.orderItemId ?? item.id ?? 0),
+        quantity: Number(item.quantity ?? 1)
+      })) : [] }
+    } as any);
+  }
+
+  async updateShipmentStatus(id: number, dto: Record<string, unknown>) {
+    const shipment = await this.repository.findShipmentById(id);
+    if (!shipment) {
+      throw new AppError('Shipment not found', HTTP_STATUS.NOT_FOUND, 'SHIPMENT_NOT_FOUND');
+    }
+    const nextStatus = String(dto.status || shipment.status);
+    return this.repository.updateShipment(id, { status: nextStatus, updatedAt: new Date() });
   }
 
   private async reserveCartInventory(order: any) {

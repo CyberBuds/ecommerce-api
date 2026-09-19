@@ -1,14 +1,30 @@
 import { Router } from 'express';
 import createShippingController from '../controllers/shipping.controller';
 import CartRepository from '../repositories/cart.repository';
+import OrderRepository from '../repositories/order.repository';
+import OrderService from '../services/order.service';
+import ProductRepository from '../repositories/product.repository';
+import InventoryRepository from '../repositories/inventory.repository';
+import CustomerRepository from '../repositories/customer.repository';
 import ShippingService from '../services/shipping.service';
 import validate from '../middlewares/validation.middleware';
+import authenticate from '../middlewares/authenticate';
+import authorize from '../middlewares/authorize';
 import { deliverySlotListValidation, shippingMethodListValidation } from '../validations/shipping.validation';
+import createOrderController from '../controllers/order.controller';
 
 const router = Router();
 const cartRepository = new CartRepository();
 const shippingService = new ShippingService(cartRepository);
 const controller = createShippingController(shippingService);
+const orderService = new OrderService(new OrderRepository(), cartRepository, new InventoryRepository(), new ProductRepository(), new CustomerRepository());
+const orderController = createOrderController(orderService);
+
+router.use(authenticate);
+
+router.get('/shipments', authorize({ roles: ['Super Admin', 'Admin'] }), orderController.listShipments);
+router.post('/shipments/order/:orderId', authorize({ roles: ['Super Admin', 'Admin'] }), orderController.createShipment);
+router.put('/shipments/:shipmentId/status', authorize({ roles: ['Super Admin', 'Admin'] }), orderController.updateShipmentStatus);
 
 /**
  * @openapi

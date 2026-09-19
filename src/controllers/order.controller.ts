@@ -114,11 +114,94 @@ export default function createOrderController(service: OrderService) {
       }
     },
 
+    listShipments: async (_req: Request, res: Response, next: NextFunction) => {
+      try {
+        const shipments = await service.listShipments();
+        return apiResponse.success(res, shipments, 'Shipments fetched successfully');
+      } catch (error) {
+        next(error);
+      }
+    },
+
     getShipments: async (req: Request, res: Response, next: NextFunction) => {
       try {
         const id = Number(req.params.id);
         const shipments = await service.getShipments(id);
         return apiResponse.success(res, shipments, 'Order shipments fetched successfully');
+      } catch (error) {
+        next(error);
+      }
+    },
+
+    startPicking: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const id = Number(req.params.id);
+        const order = await service.startPicking(id);
+        return apiResponse.success(res, order, 'Picking started successfully');
+      } catch (error) {
+        next(error);
+      }
+    },
+
+    updateItemPicking: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const id = Number(req.params.id);
+        const itemId = Number(req.params.itemId);
+        const status = String(req.body?.status || 'PENDING');
+        const order = await service.updateItemPicking(id, itemId, status);
+        return apiResponse.success(res, order, 'Picking item updated successfully');
+      } catch (error) {
+        next(error);
+      }
+    },
+
+    completePicking: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const id = Number(req.params.id);
+        const order = await service.completePicking(id);
+        return apiResponse.success(res, order, 'Picking completed successfully');
+      } catch (error) {
+        next(error);
+      }
+    },
+
+    updateItemPacking: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const id = Number(req.params.id);
+        const itemId = Number(req.params.itemId);
+        const status = String(req.body?.status || 'PENDING');
+        const order = await service.updateItemPacking(id, itemId, status);
+        return apiResponse.success(res, order, 'Packing item updated successfully');
+      } catch (error) {
+        next(error);
+      }
+    },
+
+    completePacking: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const id = Number(req.params.id);
+        const order = await service.completePacking(id);
+        return apiResponse.success(res, order, 'Packing completed successfully');
+      } catch (error) {
+        next(error);
+      }
+    },
+
+    createShipment: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const orderId = Number(req.params.orderId);
+        const shipment = await service.createShipment(orderId, req.body);
+        return apiResponse.created(res, shipment, 'Shipment created successfully');
+      } catch (error) {
+        next(error);
+      }
+    },
+
+    updateShipmentStatus: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const shipmentId = Number(req.params.shipmentId);
+        const shipment = await service.updateShipmentStatus(shipmentId, req.body);
+        return apiResponse.success(res, shipment, 'Shipment status updated successfully');
       } catch (error) {
         next(error);
       }

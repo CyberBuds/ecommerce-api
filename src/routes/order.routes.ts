@@ -209,6 +209,12 @@ router.put('/:id', [...orderIdParam, ...updateOrderValidation], validate, contro
  */
 router.patch('/:id/status', orderStatusValidation, validate, controller.updateStatus);
 
+router.put('/:id/picking/start', orderIdParam, validate, controller.startPicking);
+router.put('/:id/picking/items/:itemId', orderIdParam, validate, controller.updateItemPicking);
+router.put('/:id/picking/complete', orderIdParam, validate, controller.completePicking);
+router.put('/:id/packing/items/:itemId', orderIdParam, validate, controller.updateItemPacking);
+router.put('/:id/packing/complete', orderIdParam, validate, controller.completePacking);
+
 /**
  * @openapi
  * /api/v1/orders/{id}/cancel:
