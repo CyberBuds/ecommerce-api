@@ -119,7 +119,14 @@ export default class InventoryRepository {
   }
 
   async findInventoryById(id: number) {
-    return db.inventory.findUnique({ where: { id } });
+    return db.inventory.findUnique({
+      where: { id },
+      include: {
+        product: true,
+        warehouse: true,
+        variant: true
+      }
+    });
   }
 
   async findInventoryRecord(productId: number, variantId: number | null, warehouseId: number) {
@@ -185,7 +192,17 @@ export default class InventoryRepository {
     orderBy[sortBy] = query.sortOrder === 'desc' ? 'desc' : 'asc';
 
     const [items, total] = await Promise.all([
-      db.inventory.findMany({ where, orderBy, skip, take: pageSize }),
+      db.inventory.findMany({
+        where,
+        orderBy,
+        skip,
+        take: pageSize,
+        include: {
+          product: true,
+          warehouse: true,
+          variant: true
+        }
+      }),
       db.inventory.count({ where })
     ]);
 
