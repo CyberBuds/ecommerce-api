@@ -2,6 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import createProductController from '../controllers/product.controller';
 import ProductRepository from '../repositories/product.repository';
+import InventoryRepository from '../repositories/inventory.repository';
 import ProductService from '../services/product.service';
 import { PrismaClient } from '@prisma/client';
 import authenticate from '../middlewares/authenticate';
@@ -26,7 +27,8 @@ import {
 
 const router = Router();
 const productRepository = new ProductRepository();
-const productService = new ProductService(productRepository);
+const inventoryRepository = new InventoryRepository();
+const productService = new ProductService(productRepository, inventoryRepository);
 const productController = createProductController(productService);
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 

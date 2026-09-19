@@ -15,6 +15,13 @@ export default class InventoryRepository {
     return db.warehouse.findUnique({ where: { id } });
   }
 
+  async findFirstWarehouse() {
+    return db.warehouse.findFirst({
+      where: { status: 'ACTIVE' },
+      orderBy: { createdAt: 'asc' }
+    });
+  }
+
   async createWarehouse(data: Record<string, unknown>) {
     return db.warehouse.create({ data });
   }

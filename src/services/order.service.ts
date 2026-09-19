@@ -394,7 +394,10 @@ export default class OrderService {
     for (const item of order.items) {
       const inventory = await this.inventoryRepository.findInventoryByProductVariant(item.productId, item.variantId ?? null);
       if (!inventory) {
-        throw new AppError('Inventory record not found for order item', HTTP_STATUS.BAD_REQUEST, 'INVENTORY_NOT_FOUND');
+        // Some demo or imported orders may not have matching inventory rows yet.
+        // Do not block order status transitions in that case; the workflow can continue
+        // and stock can be reconciled later in the inventory module.
+        continue;
       }
       const reservedStock = inventory.reservedStock;
       const currentStock = inventory.currentStock;

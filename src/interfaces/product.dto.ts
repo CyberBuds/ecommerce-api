@@ -51,6 +51,9 @@ export interface CreateProductDto {
   isBestSeller?: boolean;
   isNewArrival?: boolean;
   status?: ProductStatus;
+  initialStock?: number;
+  minStock?: number;
+  warehouseId?: number;
   variants?: CreateProductVariantDto[];
   images?: CreateProductImageDto[];
   attributes?: CreateProductAttributeDto[];

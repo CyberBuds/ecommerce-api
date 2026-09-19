@@ -133,7 +133,13 @@ export default class ProductRepository {
     orderBy[sortBy] = query.sortOrder === 'desc' ? 'desc' : 'asc';
 
     const [items, total] = await Promise.all([
-      db.product.findMany({ where, orderBy, skip, take: pageSize, include: { variants: true, images: true, attributes: true, tags: true } }),
+      db.product.findMany({
+        where,
+        orderBy,
+        skip,
+        take: pageSize,
+        include: { variants: true, images: true, attributes: true, tags: true, inventories: true }
+      }),
       db.product.count({ where })
     ]);
 

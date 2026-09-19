@@ -45,6 +45,8 @@ export interface UpdateOrderDto {
   paymentMethod?: string;
   currency?: string;
   exchangeRate?: number;
+  status?: OrderStatus | string;
+  orderStatus?: OrderStatus | string;
 }
 
 export interface OrderStatusUpdateDto {

@@ -28,7 +28,9 @@ export const updateOrderValidation = [
   body('shippingMethodId').optional().isInt({ gt: 0 }).withMessage('Shipping method id must be a valid integer'),
   body('deliverySlotId').optional().isInt({ gt: 0 }).withMessage('Delivery slot id must be a valid integer'),
   body('currency').optional().trim().notEmpty(),
-  body('exchangeRate').optional().isFloat({ gt: 0 }).toFloat()
+  body('exchangeRate').optional().isFloat({ gt: 0 }).toFloat(),
+  body('status').optional().isIn(['PENDING', 'CONFIRMED', 'PROCESSING', 'PACKED', 'READY_TO_SHIP', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'RETURNED', 'REFUNDED', 'FAILED']).withMessage('Invalid order status'),
+  body('orderStatus').optional().isIn(['PENDING', 'CONFIRMED', 'PROCESSING', 'PACKED', 'READY_TO_SHIP', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'RETURNED', 'REFUNDED', 'FAILED']).withMessage('Invalid order status')
 ];
 
 export const orderStatusValidation = [

@@ -4,6 +4,7 @@ import * as xlsx from 'xlsx';
 import AppError from '../utils/AppError';
 import HTTP_STATUS from '../constants/httpStatus';
 import ProductRepository from '../repositories/product.repository';
+import InventoryRepository from '../repositories/inventory.repository';
 import {
   CreateProductAttributeDto,
   CreateProductDto,
@@ -34,7 +35,7 @@ function toRecord(value: unknown): Record<string, unknown> {
 }
 
 export default class ProductService {
-  constructor(private repository: ProductRepository) {}
+  constructor(private repository: ProductRepository, private inventoryRepository?: InventoryRepository) {}
 
   private async assertUnique(dto: Partial<CreateProductDto> | Partial<UpdateProductDto>, excludeId?: number) {
     if (dto.sku) {
@@ -138,6 +139,44 @@ export default class ProductService {
 
     const { variants, images, attributes, tags, categories: _categories, relations: _relations, ...productData } = payload;
     const product = await this.repository.create(productData as Record<string, unknown>);
+
+    const initialStock = Number(payload.initialStock ?? 0);
+    const minStock = Number(payload.minStock ?? 0);
+    const warehouseId = payload.warehouseId ?? 0;
+
+    if (this.inventoryRepository && (initialStock > 0 || warehouseId > 0 || payload.minStock !== undefined)) {
+      let targetWarehouseId = warehouseId > 0 ? warehouseId : (await this.inventoryRepository.findFirstWarehouse())?.id;
+      if (!targetWarehouseId) {
+        const defaultWarehouse = await this.inventoryRepository.createWarehouse({
+          warehouseCode: 'WH-DEFAULT',
+          warehouseName: 'Main Warehouse',
+          status: 'ACTIVE',
+          contactPerson: 'Operations',
+          address: 'Default inventory hub',
+          city: 'Bengaluru',
+          country: 'India'
+        });
+        targetWarehouseId = defaultWarehouse.id;
+      }
+
+      if (targetWarehouseId) {
+        const existingInventory = await this.inventoryRepository.findInventoryRecord(product.id, null, targetWarehouseId);
+        if (!existingInventory) {
+          await this.inventoryRepository.createInventory({
+            productId: product.id,
+            variantId: null,
+            warehouseId: targetWarehouseId,
+            currentStock: initialStock,
+            reservedStock: 0,
+            availableStock: initialStock,
+            minimumStock: minStock,
+            maximumStock: 0,
+            reorderLevel: 0,
+            status: initialStock > 0 ? 'ACTIVE' : 'OUT_OF_STOCK'
+          });
+        }
+      }
+    }
 
     if (variants && variants.length > 0) {
       await Promise.all(variants.map((variant) => this.repository.createVariant(product.id, toRecord(variant))));
