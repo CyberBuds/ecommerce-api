@@ -121,9 +121,10 @@ export default class ProductService {
 
       const existingValue = await this.repository.findAttributeValueByName(attributeKey, attributeValue);
       const matchedValue = existingValue ?? await this.repository.createAttributeValue(attributeKey, attributeValue);
-      if (matchedValue && matchedValue.id) {
-        resolved.push({ attributeValueId: Number(matchedValue.id) });
+      if (!matchedValue || !matchedValue.id) {
+        throw new AppError(`Attribute value not found: ${attributeKey} = ${attributeValue}`, HTTP_STATUS.BAD_REQUEST, 'ATTRIBUTE_VALUE_NOT_FOUND');
       }
+      resolved.push({ attributeValueId: Number(matchedValue.id) });
     }
 
     return resolved;
