@@ -40,12 +40,17 @@ export default class MasterRepository {
   private normalizeRelationPayload(data: Record<string, unknown>) {
     const payload = { ...data };
 
-    if ('groupId' in payload && payload.groupId !== undefined && payload.groupId !== null) {
-      const groupId = Number(payload.groupId);
+    if ('groupId' in payload) {
+      const rawGroupId = payload.groupId;
+      const groupId = Number(rawGroupId);
+
+      if (rawGroupId === undefined || rawGroupId === null || rawGroupId === '' || Number.isNaN(groupId)) {
+        delete payload.groupId;
+        return payload;
+      }
+
       delete payload.groupId;
-      payload.group = {
-        connect: { id: groupId }
-      };
+      payload.group = { connect: { id: groupId } };
     }
 
     return payload;

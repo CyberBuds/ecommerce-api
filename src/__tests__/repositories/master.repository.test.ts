@@ -31,4 +31,34 @@ describe('MasterRepository', () => {
       }
     });
   });
+
+  it('should ignore empty groupId values instead of creating an invalid Prisma relation', async () => {
+    const attributeCreate = jest.fn().mockResolvedValue({ id: 1 });
+    const prismaClient = {
+      attribute: { create: attributeCreate }
+    };
+
+    const repository = new MasterRepository('attribute', prismaClient as any);
+
+    await repository.create({
+      name: 'Size',
+      code: 'SIZE',
+      slug: 'size',
+      status: 'ACTIVE',
+      groupId: '',
+      displayOrder: 0,
+      createdBy: 1
+    });
+
+    expect(attributeCreate).toHaveBeenCalledWith({
+      data: {
+        name: 'Size',
+        code: 'SIZE',
+        slug: 'size',
+        status: 'ACTIVE',
+        displayOrder: 0,
+        createdBy: 1,
+      }
+    });
+  });
 });
