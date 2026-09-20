@@ -231,7 +231,12 @@ export default class ProductService {
     await this.assertUnique(payload, id);
 
     const { variants, images, attributes, tags, categories: _categories, relations: _relations, initialStock, minStock, warehouseId, ...productData } = payload;
-    const updated = await this.repository.update(id, productData as Record<string, unknown>);
+    const productUpdateData = { ...productData } as Record<string, unknown>;
+    delete productUpdateData.initialStock;
+    delete productUpdateData.minStock;
+    delete productUpdateData.warehouseId;
+
+    const updated = await this.repository.update(id, productUpdateData);
 
     await this.ensureProductInventory(id, initialStock, minStock, warehouseId);
 
