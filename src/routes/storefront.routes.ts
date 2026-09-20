@@ -81,7 +81,20 @@ router.get('/products', async (req, res, next) => {
         skip,
         take: pageSize,
         orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
-        include: { variants: true, images: true, attributes: true, tags: true }
+        include: {
+          variants: true,
+          images: true,
+          attributes: {
+            include: {
+              attributeValue: {
+                include: {
+                  attribute: true
+                }
+              }
+            }
+          },
+          tags: true
+        }
       }),
       db.product.count({ where: { ...where, status: { in: ['ACTIVE', 'PUBLISHED'] } } }),
       db.category.findMany({
@@ -91,10 +104,23 @@ router.get('/products', async (req, res, next) => {
     ]);
 
     const categoryNames = new Map(categories.map((category: { id: number; name: string }) => [category.id, category.name]));
-    const items = products.map((product: any) => ({
-      ...product,
-      category: product.categoryId ? { name: categoryNames.get(product.categoryId) || null } : null
-    }));
+    const items = products.map((product: any) => {
+      const flattenedAttributes = Array.isArray(product.attributes)
+        ? product.attributes
+            .map((entry: any) => {
+              const attributeName = entry?.attributeValue?.attribute?.name;
+              const attributeValue = entry?.attributeValue?.value;
+              return attributeName && attributeValue ? { attributeKey: attributeName, attributeValue } : null;
+            })
+            .filter(Boolean)
+        : [];
+
+      return {
+        ...product,
+        attributes: flattenedAttributes,
+        category: product.categoryId ? { name: categoryNames.get(product.categoryId) || null } : null
+      };
+    });
 
     return apiResponse.success(
       res,

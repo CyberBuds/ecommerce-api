@@ -11,7 +11,15 @@ export default class ProductRepository {
       include: {
         variants: true,
         images: true,
-        attributes: true,
+        attributes: {
+          include: {
+            attributeValue: {
+              include: {
+                attribute: true
+              }
+            }
+          }
+        },
         tags: true
       }
     });
@@ -32,11 +40,44 @@ export default class ProductRepository {
   }
 
   async create(data: Record<string, unknown>) {
-    return db.product.create({ data, include: { variants: true, images: true, attributes: true, tags: true } });
+    return db.product.create({
+      data,
+      include: {
+        variants: true,
+        images: true,
+        attributes: {
+          include: {
+            attributeValue: {
+              include: {
+                attribute: true
+              }
+            }
+          }
+        },
+        tags: true
+      }
+    });
   }
 
   async update(id: number, data: Record<string, unknown>) {
-    return db.product.update({ where: { id }, data, include: { variants: true, images: true, attributes: true, tags: true } });
+    return db.product.update({
+      where: { id },
+      data,
+      include: {
+        variants: true,
+        images: true,
+        attributes: {
+          include: {
+            attributeValue: {
+              include: {
+                attribute: true
+              }
+            }
+          }
+        },
+        tags: true
+      }
+    });
   }
 
   async softDelete(id: number) {
@@ -166,7 +207,14 @@ export default class ProductRepository {
   }
 
   async createAttributes(productId: number, attributes: Record<string, unknown>[]) {
-    return db.productAttribute.createMany({ data: attributes.map((attribute) => ({ ...attribute, productId })) });
+    return db.productAttribute.createMany({
+      data: attributes.map((attribute) => ({
+        ...attribute,
+        productId,
+        attributeValueId: Number((attribute as any).attributeValueId)
+      })),
+      skipDuplicates: true
+    });
   }
 
   async deleteAttributes(productId: number) {
@@ -182,7 +230,70 @@ export default class ProductRepository {
   }
 
   async listAttributes(productId: number) {
-    return db.productAttribute.findMany({ where: { productId } });
+    return db.productAttribute.findMany({
+      where: { productId },
+      include: {
+        attributeValue: {
+          include: {
+            attribute: true
+          }
+        }
+      }
+    });
+  }
+
+  async findAttributeValueByName(attributeKey: string, attributeValue: string) {
+    const normalizedKey = String(attributeKey || '').trim();
+    const normalizedValue = String(attributeValue || '').trim();
+    if (!normalizedKey || !normalizedValue) return null;
+
+    const attribute = await db.attribute.findFirst({
+      where: {
+        OR: [
+          { name: { equals: normalizedKey, mode: 'insensitive' } },
+          { slug: { equals: normalizedKey.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''), mode: 'insensitive' } }
+        ],
+        isDeleted: false,
+        isActive: true,
+        status: 'ACTIVE'
+      },
+      include: { values: true }
+    });
+
+    if (!attribute) return null;
+
+    return attribute.values.find((value: any) => value.value.toLowerCase() === normalizedValue.toLowerCase()) ?? null;
+  }
+
+  async createAttributeValue(attributeKey: string, attributeValue: string) {
+    const normalizedKey = String(attributeKey || '').trim();
+    const normalizedValue = String(attributeValue || '').trim();
+    if (!normalizedKey || !normalizedValue) return null;
+
+    const attribute = await db.attribute.findFirst({
+      where: {
+        OR: [
+          { name: { equals: normalizedKey, mode: 'insensitive' } },
+          { slug: { equals: normalizedKey.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''), mode: 'insensitive' } }
+        ],
+        isDeleted: false,
+        isActive: true,
+        status: 'ACTIVE'
+      }
+    });
+
+    if (!attribute) return null;
+
+    return db.attributeValue.create({
+      data: {
+        attributeId: attribute.id,
+        value: normalizedValue,
+        code: normalizedValue,
+        slug: normalizedValue.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+        status: 'ACTIVE',
+        isActive: true,
+      }
+    });
   }
 
   async createProductImage(productId: number, data: Record<string, unknown>) {

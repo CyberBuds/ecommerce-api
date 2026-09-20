@@ -109,12 +109,24 @@ export default class ProductService {
     return payload;
   }
 
-  private normalizeAttributes(attributes?: CreateProductAttributeDto[]) {
+  private async resolveAttributeValueIds(attributes?: CreateProductAttributeDto[]) {
     if (!attributes || attributes.length === 0) return [];
-    return attributes.map((attribute) => ({
-      attributeKey: attribute.attributeKey,
-      attributeValue: attribute.attributeValue
-    }));
+
+    const resolved: Array<Record<string, unknown>> = [];
+
+    for (const attribute of attributes) {
+      const attributeKey = String(attribute.attributeKey || '').trim();
+      const attributeValue = String(attribute.attributeValue || '').trim();
+      if (!attributeKey || !attributeValue) continue;
+
+      const existingValue = await this.repository.findAttributeValueByName(attributeKey, attributeValue);
+      const matchedValue = existingValue ?? await this.repository.createAttributeValue(attributeKey, attributeValue);
+      if (matchedValue && matchedValue.id) {
+        resolved.push({ attributeValueId: Number(matchedValue.id) });
+      }
+    }
+
+    return resolved;
   }
 
   private buildExportRows(products: any[]) {
@@ -205,7 +217,10 @@ export default class ProductService {
     }
 
     if (attributes && attributes.length > 0) {
-      await this.repository.createAttributes(product.id, this.normalizeAttributes(attributes));
+      const resolvedAttributes = await this.resolveAttributeValueIds(attributes);
+      if (resolvedAttributes.length > 0) {
+        await this.repository.createAttributes(product.id, resolvedAttributes);
+      }
     }
 
     if (tags && tags.length > 0) {
@@ -262,7 +277,10 @@ export default class ProductService {
 
     if (attributes) {
       await this.repository.deleteAttributes(id);
-      await this.repository.createAttributes(id, this.normalizeAttributes(attributes));
+      const resolvedAttributes = await this.resolveAttributeValueIds(attributes);
+      if (resolvedAttributes.length > 0) {
+        await this.repository.createAttributes(id, resolvedAttributes);
+      }
     }
 
     await this.repository.recordAudit(id, 'UPDATE_PRODUCT', updatedBy ?? null, { updates: productData }, existing as any);
@@ -313,8 +331,9 @@ export default class ProductService {
   }
 
   async createAttributes(productId: number, attributes: CreateProductAttributeDto[]) {
-    const result = await this.repository.createAttributes(productId, this.normalizeAttributes(attributes));
-    await this.repository.recordAudit(productId, 'CREATE_ATTRIBUTES', null, { count: attributes.length }, null);
+    const resolvedAttributes = await this.resolveAttributeValueIds(attributes);
+    const result = await this.repository.createAttributes(productId, resolvedAttributes);
+    await this.repository.recordAudit(productId, 'CREATE_ATTRIBUTES', null, { count: resolvedAttributes.length }, null);
     return result;
   }
 
@@ -392,9 +411,16 @@ export default class ProductService {
         altText: image.altText
       } as Record<string, unknown>)
     ));
-    await Promise.all(source.attributes.map((attribute: any) =>
-      this.repository.createAttributes(duplicateProduct.id, [{ attributeKey: attribute.attributeKey, attributeValue: attribute.attributeValue }])
-    ));
+    const duplicatedAttributeValueIds = source.attributes
+      .map((attribute: any) => Number(attribute?.attributeValueId ?? attribute?.attributeValue?.id))
+      .filter(Number.isFinite);
+
+    if (duplicatedAttributeValueIds.length > 0) {
+      await this.repository.createAttributes(
+        duplicateProduct.id,
+        duplicatedAttributeValueIds.map((attributeValueId: number) => ({ attributeValueId }))
+      );
+    }
     await Promise.all(source.tags.map((tag: any) => this.repository.createProductTag(duplicateProduct.id, tag.tagId)));
     await this.repository.recordAudit(productId, 'DUPLICATE_PRODUCT', null, { duplicatedId: duplicateProduct.id }, source as any);
     return this.repository.findById(duplicateProduct.id);
