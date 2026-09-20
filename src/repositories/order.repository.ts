@@ -82,6 +82,7 @@ export default class OrderRepository {
           shippingAddress: true,
           shippingMethod: true,
           items: { include: { product: true, variant: true } },
+          payments: true,
           timeline: true
         },
         orderBy,
@@ -96,6 +97,10 @@ export default class OrderRepository {
 
   async createOrder(data: Record<string, unknown>) {
     return db.order.create({ data, include: { items: true, statusHistory: true, timeline: true, shipments: true, invoice: true, returnRequests: true, refunds: true, notes: true, auditLogs: true } });
+  }
+
+  async createPayment(data: Record<string, unknown>) {
+    return db.payment.create({ data, include: { order: true, customer: true, transactions: true, invoicePayments: true, auditLogs: true } });
   }
 
   async updateOrder(id: number, data: Record<string, unknown>) {

@@ -26,6 +26,24 @@ function calculateProfit(unitPrice: number, costPrice: number, quantity: number,
   return roundValue(unitPrice * quantity - costPrice * quantity - discount + tax);
 }
 
+export function resolveOrderPaymentMethod(order: any): string | undefined {
+  if (!order) return undefined;
+
+  const latestPayment = Array.isArray(order.payments) && order.payments.length > 0
+    ? [...order.payments].sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())[0]
+    : null;
+
+  const candidate = latestPayment?.paymentMethod ?? order.paymentMethod ?? latestPayment?.gateway ?? undefined;
+  if (!candidate) return undefined;
+
+  const normalized = String(candidate).toUpperCase();
+
+  if (normalized === 'COD') return 'CASH_ON_DELIVERY';
+  if (normalized === 'CASH_ON_DELIVERY') return 'CASH_ON_DELIVERY';
+
+  return candidate;
+}
+
 export default class OrderService {
   constructor(
     private repository: OrderRepository,
@@ -156,7 +174,14 @@ export default class OrderService {
     if (currentCustomerId) {
       query.customerId = currentCustomerId;
     }
-    return this.repository.listOrders(query);
+    const result = await this.repository.listOrders(query);
+    return {
+      ...result,
+      items: (result.items || []).map((order: any) => ({
+        ...order,
+        paymentMethod: resolveOrderPaymentMethod(order)
+      }))
+    };
   }
 
   async getById(id: number, currentCustomerId?: number) {
@@ -167,7 +192,10 @@ export default class OrderService {
     if (currentCustomerId && order.customerId !== currentCustomerId) {
       throw new AppError('Access denied to this order', HTTP_STATUS.FORBIDDEN, 'ORDER_ACCESS_DENIED');
     }
-    return order;
+    return {
+      ...order,
+      paymentMethod: resolveOrderPaymentMethod(order)
+    };
   }
 
   async update(id: number, dto: UpdateOrderDto, actorId?: number) {
@@ -196,6 +224,61 @@ export default class OrderService {
     return updated;
   }
 
+  private async ensureCashOnDeliveryPayment(order: any) {
+    const paymentMethod = resolveOrderPaymentMethod(order);
+    if (paymentMethod !== 'CASH_ON_DELIVERY') {
+      return null;
+    }
+
+    const existingPayment = Array.isArray(order.payments)
+      ? order.payments.find((payment: any) => payment.paymentMethod === 'CASH_ON_DELIVERY')
+      : null;
+
+    if (existingPayment) {
+      return existingPayment;
+    }
+
+    return this.repository.createPayment({
+      paymentNumber: generateUniqueNumber('PAY'),
+      orderId: order.id,
+      customerId: order.customerId ?? null,
+      gateway: 'OFFLINE',
+      paymentMethod: 'CASH_ON_DELIVERY',
+      currency: order.currency || 'INR',
+      exchangeRate: order.exchangeRate ?? 1,
+      amount: Number(order.grandTotal ?? 0),
+      capturedAmount: 0,
+      refundedAmount: 0,
+      status: 'PENDING',
+      attemptCount: 1,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    } as any);
+  }
+
+  private async ensureInvoiceForOrder(order: any) {
+    const invoice = await this.repository.findInvoiceByOrderId(order.id);
+    if (invoice) {
+      return invoice;
+    }
+
+    return this.repository.createInvoice({
+      invoiceNumber: generateUniqueNumber('INV'),
+      orderId: order.id,
+      invoiceStatus: 'ISSUED',
+      gstAmount: Number(order.taxAmount ?? 0),
+      cgst: 0,
+      sgst: 0,
+      igst: 0,
+      discount: Number(order.discountAmount ?? 0) + Number(order.couponDiscount ?? 0),
+      roundOff: Number(order.roundOff ?? 0),
+      netAmount: Number(order.grandTotal ?? 0),
+      invoicePdfUrl: null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    } as any);
+  }
+
   async updateStatus(id: number, dto: OrderStatusUpdateDto, actorId?: number) {
     const order = await this.repository.findOrderById(id);
     if (!order) {
@@ -219,6 +302,12 @@ export default class OrderService {
     }
     if (dto.status === 'DELIVERED') {
       payload.fulfillmentStatus = 'DELIVERED';
+      const paymentMethod = resolveOrderPaymentMethod(order);
+      if (paymentMethod === 'CASH_ON_DELIVERY') {
+        payload.paymentStatus = 'CAPTURED';
+        await this.ensureCashOnDeliveryPayment(order);
+        await this.ensureInvoiceForOrder(order);
+      }
       await this.awardLoyaltyPoints(order);
     }
 

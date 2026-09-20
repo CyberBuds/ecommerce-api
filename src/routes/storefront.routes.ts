@@ -167,6 +167,25 @@ router.post('/checkout', authenticate, async (req, res, next) => {
       orderSource: 'WEB'
     });
 
+    await db.payment.create({
+      data: {
+        paymentNumber: `PAY-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        orderId: order.id,
+        customerId: customer.id,
+        gateway: 'OFFLINE',
+        paymentMethod: 'CASH_ON_DELIVERY',
+        currency: 'INR',
+        exchangeRate: 1,
+        amount: Number(order.grandTotal ?? 0),
+        capturedAmount: 0,
+        refundedAmount: 0,
+        status: 'PENDING',
+        attemptCount: 1,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    });
+
     // A completed cart must never be reused by a later checkout. The storefront
     // creates a fresh session client-side, and clearing this server-side mapping
     // also protects against a stale browser session or direct API request.
