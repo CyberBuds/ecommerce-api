@@ -4,6 +4,10 @@ import { buildPagination } from '../utils/pagination';
 
 const db = prisma as any;
 
+function normalizeAttributeKey(value: unknown) {
+  return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
 export default class ProductRepository {
   async findById(id: number) {
     return db.product.findUnique({
@@ -247,18 +251,15 @@ export default class ProductRepository {
     const normalizedValue = String(attributeValue || '').trim();
     if (!normalizedKey || !normalizedValue) return null;
 
-    const attribute = await db.attribute.findFirst({
-      where: {
-        OR: [
-          { name: { equals: normalizedKey, mode: 'insensitive' } },
-          { slug: { equals: normalizedKey.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''), mode: 'insensitive' } }
-        ],
-        isDeleted: false,
-        isActive: true,
-        status: 'ACTIVE'
-      },
+    const attributes = await db.attribute.findMany({
+      where: { isDeleted: false, isActive: true, status: 'ACTIVE' },
       include: { values: true }
     });
+    const normalizedLookupKey = normalizeAttributeKey(normalizedKey);
+    const attribute = attributes.find((item: any) =>
+      normalizeAttributeKey(item.name) === normalizedLookupKey ||
+      normalizeAttributeKey(item.slug) === normalizedLookupKey
+    );
 
     if (!attribute) return null;
 
@@ -270,17 +271,14 @@ export default class ProductRepository {
     const normalizedValue = String(attributeValue || '').trim();
     if (!normalizedKey || !normalizedValue) return null;
 
-    const attribute = await db.attribute.findFirst({
-      where: {
-        OR: [
-          { name: { equals: normalizedKey, mode: 'insensitive' } },
-          { slug: { equals: normalizedKey.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''), mode: 'insensitive' } }
-        ],
-        isDeleted: false,
-        isActive: true,
-        status: 'ACTIVE'
-      }
+    const attributes = await db.attribute.findMany({
+      where: { isDeleted: false, isActive: true, status: 'ACTIVE' }
     });
+    const normalizedLookupKey = normalizeAttributeKey(normalizedKey);
+    const attribute = attributes.find((item: any) =>
+      normalizeAttributeKey(item.name) === normalizedLookupKey ||
+      normalizeAttributeKey(item.slug) === normalizedLookupKey
+    );
 
     if (!attribute) return null;
 

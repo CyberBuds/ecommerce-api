@@ -10,7 +10,7 @@ function isPrismaError(error: any): error is Prisma.PrismaClientKnownRequestErro
 }
 
 export default function errorHandler(err: any, _req: Request, res: Response, _next: NextFunction) {
-  logger.error(err);
+  logger.error(err instanceof Error ? { name: err.name, message: err.message, stack: err.stack } : err);
 
   // Custom AppError
   if (err instanceof AppError) {
@@ -37,5 +37,8 @@ export default function errorHandler(err: any, _req: Request, res: Response, _ne
   }
 
   // Fallback
-  return apiResponse.error(res, 'Internal server error', [{ message: err.message || 'Unknown error' }]);
+  const message = err instanceof Prisma.PrismaClientValidationError
+    ? err.message
+    : err.message || 'Unknown error';
+  return apiResponse.error(res, 'Internal server error', [{ message }]);
 }

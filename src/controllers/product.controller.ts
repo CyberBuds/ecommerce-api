@@ -7,7 +7,8 @@ export function createProductController(service: ProductService) {
     create: async (req: Request, res: Response, next: NextFunction) => {
       try {
         const dto = req.body;
-        const createdBy = (req as any).user?.sub;
+        const createdByValue = Number((req as any).user?.sub);
+        const createdBy = Number.isInteger(createdByValue) && createdByValue > 0 ? createdByValue : undefined;
         const product = await service.create(dto, createdBy);
         return apiResponse.created(res, product, 'Product created');
       } catch (error) {
@@ -19,7 +20,8 @@ export function createProductController(service: ProductService) {
       try {
         const id = Number(req.params.id);
         const dto = req.body;
-        const updatedBy = (req as any).user?.sub;
+        const updatedByValue = Number((req as any).user?.sub);
+        const updatedBy = Number.isInteger(updatedByValue) && updatedByValue > 0 ? updatedByValue : undefined;
         const product = await service.update(id, dto, updatedBy);
         return apiResponse.success(res, product, 'Product updated');
       } catch (error) {
