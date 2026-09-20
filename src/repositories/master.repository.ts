@@ -40,6 +40,10 @@ export default class MasterRepository {
   private normalizeRelationPayload(data: Record<string, unknown>) {
     const payload = { ...data };
 
+    if (this.modelName === 'attribute' && 'displayOrder' in payload) {
+      delete payload.displayOrder;
+    }
+
     if ('groupId' in payload) {
       const rawGroupId = payload.groupId;
       const groupId = Number(rawGroupId);

@@ -25,7 +25,6 @@ describe('MasterRepository', () => {
         code: 'SIZE',
         slug: 'size',
         status: 'ACTIVE',
-        displayOrder: 0,
         createdBy: 1,
         group: { connect: { id: 7 } }
       }
@@ -56,7 +55,6 @@ describe('MasterRepository', () => {
         code: 'SIZE',
         slug: 'size',
         status: 'ACTIVE',
-        displayOrder: 0,
         createdBy: 1,
       }
     });
