@@ -44,7 +44,13 @@ export default class MasterRepository {
       const rawGroupId = payload.groupId;
       const groupId = Number(rawGroupId);
 
-      if (rawGroupId === undefined || rawGroupId === null || rawGroupId === '' || Number.isNaN(groupId)) {
+      if (
+        rawGroupId === undefined ||
+        rawGroupId === null ||
+        rawGroupId === '' ||
+        Number.isNaN(groupId) ||
+        groupId <= 0
+      ) {
         delete payload.groupId;
         return payload;
       }

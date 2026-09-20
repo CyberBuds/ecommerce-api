@@ -32,7 +32,7 @@ describe('MasterRepository', () => {
     });
   });
 
-  it('should ignore empty groupId values instead of creating an invalid Prisma relation', async () => {
+  it('should ignore empty or zero groupId values instead of creating an invalid Prisma relation', async () => {
     const attributeCreate = jest.fn().mockResolvedValue({ id: 1 });
     const prismaClient = {
       attribute: { create: attributeCreate }
@@ -45,7 +45,7 @@ describe('MasterRepository', () => {
       code: 'SIZE',
       slug: 'size',
       status: 'ACTIVE',
-      groupId: '',
+      groupId: '0',
       displayOrder: 0,
       createdBy: 1
     });
