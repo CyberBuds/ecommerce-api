@@ -83,7 +83,8 @@ export default class OrderRepository {
           shippingMethod: true,
           items: { include: { product: true, variant: true } },
           payments: true,
-          timeline: true
+          timeline: true,
+          invoice: true
         },
         orderBy,
         skip,
