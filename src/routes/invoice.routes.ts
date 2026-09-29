@@ -10,8 +10,8 @@ const controller = createInvoiceController(service);
 
 router.use(authenticate);
 
-router.get('/', authorize({ roles: ['Super Admin', 'Admin', 'Finance Manager'] }), controller.listInvoices);
-router.get('/:id', authorize({ roles: ['Super Admin', 'Admin', 'Finance Manager'] }), controller.getInvoice);
+router.get('/', authorize({ roles: ['Super Admin', 'Admin', 'Finance Manager', 'Manager'] }), controller.listInvoices);
+router.get('/:id', authorize({ roles: ['Super Admin', 'Admin', 'Finance Manager', 'Manager'] }), controller.getInvoice);
 router.put('/:id/pay', authorize({ roles: ['Super Admin', 'Admin', 'Finance Manager'] }), controller.payInvoice);
 router.put('/:id/void', authorize({ roles: ['Super Admin', 'Admin', 'Finance Manager'] }), controller.voidInvoice);
 
